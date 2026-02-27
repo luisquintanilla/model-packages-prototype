@@ -160,7 +160,7 @@ GitHub Packages requires authentication even for public repos. Create a [persona
 
 ```bash
 dotnet nuget add source https://nuget.pkg.github.com/luisquintanilla/index.json \
-  --name github-luisquintanilla \
+  --name model-packages \
   --username YOUR_GITHUB_USERNAME \
   --password YOUR_PAT
 ```
