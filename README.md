@@ -197,7 +197,7 @@ dotnet add package ModelPackages
 
 ## Status
 
-This is a **prototype / proof of concept** exploring the design space. Not production-ready.
+This is a **prototype / proof of concept** exploring the design space. Not production-ready. See the [Roadmap](docs/roadmap.md) for planned improvements.
 
 ## License
 

@@ -14,7 +14,10 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
 
     permissions:
       contents: write    # needed for creating releases
@@ -38,6 +41,7 @@ jobs:
       # Determine version: tag-based for releases, preview for main
       - name: Set version
         id: version
+        shell: bash
         run: |
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
             VERSION="${{ github.ref_name }}"
@@ -55,20 +59,21 @@ jobs:
         run: dotnet pack -c Release --no-build -o ./artifacts /p:Version=${{ steps.version.outputs.version }}
 
       - name: List packages
+        shell: bash
         run: ls -la ./artifacts/
 
-      # Push to GitHub Packages (main and tags only, not PRs)
+      # Push to GitHub Packages (main branch only, Ubuntu only to avoid duplicate pushes)
       - name: Push to GitHub Packages
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && matrix.os == 'ubuntu-latest'
         run: |
           dotnet nuget push ./artifacts/*.nupkg \
             --source ${{ env.NUGET_SOURCE }} \
             --api-key ${{ secrets.GITHUB_TOKEN }} \
             --skip-duplicate
 
-      # Create GitHub Release with .nupkg assets (tags only)
+      # Create GitHub Release with .nupkg assets (tags only, Ubuntu only)
       - name: Create GitHub Release
-        if: steps.version.outputs.is_release == 'true'
+        if: steps.version.outputs.is_release == 'true' && matrix.os == 'ubuntu-latest'
         uses: softprops/action-gh-release@v2
         with:
           files: ./artifacts/*.*nupkg
