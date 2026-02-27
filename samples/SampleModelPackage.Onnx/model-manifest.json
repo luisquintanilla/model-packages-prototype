@@ -1,0 +1,21 @@
+{
+  "model": {
+    "id": "sentence-transformers/all-MiniLM-L6-v2",
+    "revision": "main",
+    "files": [
+      {
+        "path": "onnx/model.onnx",
+        "sha256": "6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452",
+        "size": 90405214
+      }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface",
+      "repo": "sentence-transformers/all-MiniLM-L6-v2",
+      "revision": "main"
+    }
+  },
+  "defaultSource": "huggingface"
+}

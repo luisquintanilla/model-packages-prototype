@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <ModelPackagesSource Condition="'$(ModelPackagesSource)'==''"></ModelPackagesSource>
+    <ModelPackagesPrefetchModel Condition="'$(ModelPackagesPrefetchModel)'==''">false</ModelPackagesPrefetchModel>
+    <ModelPackagesCacheDir Condition="'$(ModelPackagesCacheDir)'==''"></ModelPackagesCacheDir>
+  </PropertyGroup>
+</Project>

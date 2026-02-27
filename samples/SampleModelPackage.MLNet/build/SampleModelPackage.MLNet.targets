@@ -1,0 +1,19 @@
+<Project>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>ModelPackagesSource</_Parameter1>
+      <_Parameter2>$(ModelPackagesSource)</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>ModelPackagesCacheDir</_Parameter1>
+      <_Parameter2>$(ModelPackagesCacheDir)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <Target Name="ModelPackagesPrefetchModel"
+          AfterTargets="Build"
+          Condition="'$(ModelPackagesPrefetchModel)'=='true'">
+    <Message Text="[ModelPackages] Prefetch enabled. Source=$(ModelPackagesSource) CacheDir=$(ModelPackagesCacheDir)"
+             Importance="high" />
+  </Target>
+</Project>

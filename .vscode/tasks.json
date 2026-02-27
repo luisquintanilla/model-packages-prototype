@@ -1,0 +1,86 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build Solution",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["build", "${workspaceFolder}/ModelPackages.slnx"],
+      "problemMatcher": "$msCompile",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Run: Track 1 — ONNX Consumer",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["run", "--project", "${workspaceFolder}/samples/SampleConsumer.Onnx"],
+      "problemMatcher": "$msCompile",
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "Run: Track 2 — MLNet Consumer",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["run", "--project", "${workspaceFolder}/samples/SampleConsumer.MLNet"],
+      "problemMatcher": "$msCompile",
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "CLI: Info (ONNX)",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "run", "--project", "${workspaceFolder}/src/ModelPackages.Tool", "--",
+        "info", "--manifest", "${workspaceFolder}/samples/SampleModelPackage.Onnx/model-manifest.json"
+      ],
+      "problemMatcher": "$msCompile",
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "CLI: Prefetch (ONNX)",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "run", "--project", "${workspaceFolder}/src/ModelPackages.Tool", "--",
+        "prefetch", "--manifest", "${workspaceFolder}/samples/SampleModelPackage.Onnx/model-manifest.json"
+      ],
+      "problemMatcher": "$msCompile",
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "CLI: Verify (ONNX)",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "run", "--project", "${workspaceFolder}/src/ModelPackages.Tool", "--",
+        "verify", "--manifest", "${workspaceFolder}/samples/SampleModelPackage.Onnx/model-manifest.json"
+      ],
+      "problemMatcher": "$msCompile",
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "CLI: Clear Cache (ONNX)",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "run", "--project", "${workspaceFolder}/src/ModelPackages.Tool", "--",
+        "clear-cache", "--manifest", "${workspaceFolder}/samples/SampleModelPackage.Onnx/model-manifest.json"
+      ],
+      "problemMatcher": "$msCompile",
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "Tool: Prepare .mlnet Model",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["run", "--project", "${workspaceFolder}/tools/PrepareMLNetModel"],
+      "problemMatcher": "$msCompile",
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    }
+  ]
+}

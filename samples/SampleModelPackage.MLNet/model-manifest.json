@@ -1,0 +1,20 @@
+{
+  "model": {
+    "id": "sentence-transformers/all-MiniLM-L6-v2",
+    "revision": "main",
+    "files": [
+      {
+        "path": "pipeline.mlnet",
+        "sha256": "f66efc4ce7aeb321fa4db98284a429600dbfe3c57dc65d8025d805096d28c814",
+        "size": 83187547
+      }
+    ]
+  },
+  "sources": {
+    "local": {
+      "type": "direct",
+      "url": "file:///C:/Users/luquinta/AppData/Local/ModelPackages/PreparedModels/sentence-transformers/all-MiniLM-L6-v2/pipeline.mlnet"
+    }
+  },
+  "defaultSource": "local"
+}

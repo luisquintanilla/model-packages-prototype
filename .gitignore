@@ -1,0 +1,44 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+bld/
+[Ll]og/
+[Ll]ogs/
+
+# IDE
+.idea/
+*.swp
+*~
+
+# Model artifacts (large binary files — downloaded at runtime, never committed)
+*.onnx
+*.mlnet
+*.zip
+
+# Keep project directories that happen to end in .Onnx / .MLNet
+!samples/SampleModelPackage.Onnx/
+!samples/SampleModelPackage.MLNet/
+!samples/SampleConsumer.Onnx/
+!samples/SampleConsumer.MLNet/
+!src/MLNet.Embeddings.Onnx/
+
+# OS
+Thumbs.db
+.DS_Store

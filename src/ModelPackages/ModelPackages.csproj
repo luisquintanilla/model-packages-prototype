@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>true</IsPackable>
+    <PackageId>ModelPackages</PackageId>
+    <Description>Core SDK for building model packages — fetch, cache, and verify AI model artifacts from configurable sources.</Description>
+  </PropertyGroup>
+
+</Project>

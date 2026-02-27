@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Track 1: ONNX Consumer",
+      "type": "dotnet",
+      "request": "launch",
+      "projectPath": "${workspaceFolder}/samples/SampleConsumer.Onnx/SampleConsumer.Onnx.csproj"
+    },
+    {
+      "name": "Track 2: MLNet Consumer",
+      "type": "dotnet",
+      "request": "launch",
+      "projectPath": "${workspaceFolder}/samples/SampleConsumer.MLNet/SampleConsumer.MLNet.csproj"
+    },
+    {
+      "name": "CLI: Info (ONNX manifest)",
+      "type": "dotnet",
+      "request": "launch",
+      "projectPath": "${workspaceFolder}/src/ModelPackages.Tool/ModelPackages.Tool.csproj",
+      "args": ["info", "--manifest", "${workspaceFolder}/samples/SampleModelPackage.Onnx/model-manifest.json"]
+    }
+  ]
+}

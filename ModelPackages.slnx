@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ModelPackages/ModelPackages.csproj" />
+    <Project Path="src/MLNet.Embeddings.Onnx/MLNet.Embeddings.Onnx.csproj" />
+    <Project Path="src/ModelPackages.Tool/ModelPackages.Tool.csproj" />
+  </Folder>
+  <Folder Name="/samples/onnx/">
+    <Project Path="samples/SampleModelPackage.Onnx/SampleModelPackage.Onnx.csproj" />
+    <Project Path="samples/SampleConsumer.Onnx/SampleConsumer.Onnx.csproj" />
+  </Folder>
+  <Folder Name="/samples/mlnet/">
+    <Project Path="samples/SampleModelPackage.MLNet/SampleModelPackage.MLNet.csproj" />
+    <Project Path="samples/SampleConsumer.MLNet/SampleConsumer.MLNet.csproj" />
+  </Folder>
+</Solution>
