@@ -1,0 +1,21 @@
+{
+  "model": {
+    "id": "dslim/bert-base-NER",
+    "revision": "main",
+    "files": [
+      {
+        "path": "onnx/model.onnx",
+        "sha256": "",
+        "size": null
+      }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface",
+      "repo": "dslim/bert-base-NER",
+      "revision": "main"
+    }
+  },
+  "defaultSource": "huggingface"
+}

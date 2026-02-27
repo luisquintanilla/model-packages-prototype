@@ -28,7 +28,7 @@ This track packages a raw ONNX model that lives on HuggingFace. The consumer's m
 dotnet new classlib -n MyModelPackage -f net10.0
 cd MyModelPackage
 dotnet add reference path/to/ModelPackages.csproj
-dotnet add reference path/to/MLNet.Embeddings.Onnx.csproj
+dotnet add package MLNet.TextInference.Onnx --version 0.1.0-preview.1
 ```
 
 ### 2. Create the manifest
@@ -81,7 +81,7 @@ In your `.csproj`:
 ```csharp
 using Microsoft.Extensions.AI;
 using Microsoft.ML;
-using MLNet.Embeddings.Onnx;
+using MLNet.TextInference.Onnx;
 using ModelPackages;
 
 namespace MyModelPackage;
@@ -319,7 +319,7 @@ var generator = await MiniLMModel.CreateEmbeddingGeneratorAsync(new ModelOptions
 
 ### OnnxRuntime Native Binaries
 
-The inference library (`MLNet.Embeddings.Onnx`) uses `Microsoft.ML.OnnxRuntime.Managed` — the managed-only wrapper. It does **not** include native OnnxRuntime binaries.
+The inference library (`MLNet.TextInference.Onnx`) uses `Microsoft.ML.OnnxRuntime.Managed` — the managed-only wrapper. It does **not** include native OnnxRuntime binaries.
 
 The **consumer application** (or the model package) must include:
 
@@ -336,3 +336,45 @@ When you embed `model-manifest.json` as an assembly resource, .NET prefixes the 
 ### SHA256 for HuggingFace LFS Files
 
 HuggingFace stores large files using Git LFS. The SHA256 in the manifest should be the **LFS OID** (the hash of the actual file content), not the hash of the LFS pointer. You can verify this by downloading the file and computing `sha256sum` locally.
+
+## Task-Specific Patterns
+
+The model-package pattern works across all AI inference tasks. Here's how the public API facade differs by task type:
+
+### Embeddings
+
+Return `IEmbeddingGenerator<string, Embedding<float>>` from `CreateEmbeddingGeneratorAsync()`. Different embedding models may require query/passage prefixes — bake these into the package so consumers don't need to know about them.
+
+See: `SampleModelPackage.Onnx`, `SampleModelPackage.BgeEmbedding`, `SampleModelPackage.E5Embedding`, `SampleModelPackage.GteEmbedding`
+
+### Classification
+
+Return label + confidence score from `ClassifyAsync(texts)`. Embed the label list (e.g., `["NEGATIVE", "POSITIVE"]`) as an assembly resource.
+
+See: `SampleModelPackage.Classification`
+
+### Named Entity Recognition
+
+Return entity spans (text, label, score) from `ExtractEntitiesAsync(texts)`. Embed the BIO label map as an assembly resource.
+
+See: `SampleModelPackage.NER`
+
+### Question Answering
+
+Return answer span + score from `AnswerAsync(question, context)`. The facade handles tokenizing the question-context pair.
+
+See: `SampleModelPackage.QA`
+
+### Reranking
+
+Return scored + ranked documents from `RerankAsync(query, documents)`. The facade handles cross-encoding query-document pairs.
+
+See: `SampleModelPackage.Reranking`
+
+### Text Generation
+
+Two tracks:
+- **Local ONNX GenAI**: Return `IChatClient` from `CreateChatClientAsync()` using `MLNet.TextGeneration.OnnxGenAI`.
+- **Provider-agnostic MEAI**: Use any `IChatClient` provider (OpenAI, Azure, Ollama) — no model package needed.
+
+See: `SampleModelPackage.TextGeneration`, `SampleConsumer.TextGenerationMeai`

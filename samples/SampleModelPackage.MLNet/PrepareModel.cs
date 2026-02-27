@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 using Microsoft.ML;
-using MLNet.Embeddings.Onnx;
+using MLNet.TextInference.Onnx;
 
 namespace SampleModelPackage.MLNet;
 

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.AI;
 using Microsoft.ML;
-using MLNet.Embeddings.Onnx;
+using MLNet.TextInference.Onnx;
 using ModelPackages;
 
 namespace SampleModelPackage.MLNet;

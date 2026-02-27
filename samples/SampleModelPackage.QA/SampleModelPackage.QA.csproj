@@ -1,25 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Description>Sample model package — all-MiniLM-L6-v2 embedding model (raw ONNX from HuggingFace).</Description>
+    <Description>Sample model package — deepset/minilm-uncased-squad2 (extractive QA via ONNX).</Description>
   </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\src\ModelPackages\ModelPackages.csproj" />
     <PackageReference Include="MLNet.TextInference.Onnx" Version="0.1.0-preview.1" />
   </ItemGroup>
-
   <ItemGroup>
     <EmbeddedResource Include="model-manifest.json" />
     <EmbeddedResource Include="vocab.txt" Condition="Exists('vocab.txt')" />
   </ItemGroup>
-
   <ItemGroup>
-    <None Include="build\SampleModelPackage.Onnx.props" Pack="true" PackagePath="build\" />
-    <None Include="build\SampleModelPackage.Onnx.targets" Pack="true" PackagePath="build\" />
+    <None Include="build\SampleModelPackage.QA.props" Pack="true" PackagePath="build\" />
+    <None Include="build\SampleModelPackage.QA.targets" Pack="true" PackagePath="build\" />
   </ItemGroup>
-
 </Project>

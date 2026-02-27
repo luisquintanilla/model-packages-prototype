@@ -1,0 +1,21 @@
+{
+  "model": {
+    "id": "deepset/minilm-uncased-squad2",
+    "revision": "main",
+    "files": [
+      {
+        "path": "onnx/model.onnx",
+        "sha256": "",
+        "size": null
+      }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface",
+      "repo": "deepset/minilm-uncased-squad2",
+      "revision": "main"
+    }
+  },
+  "defaultSource": "huggingface"
+}

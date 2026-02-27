@@ -1,0 +1,21 @@
+{
+  "model": {
+    "id": "BAAI/bge-small-en-v1.5",
+    "revision": "main",
+    "files": [
+      {
+        "path": "onnx/model.onnx",
+        "sha256": "",
+        "size": null
+      }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface",
+      "repo": "BAAI/bge-small-en-v1.5",
+      "revision": "main"
+    }
+  },
+  "defaultSource": "huggingface"
+}

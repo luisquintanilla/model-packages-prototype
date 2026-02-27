@@ -1,0 +1,21 @@
+{
+  "model": {
+    "id": "intfloat/e5-small-v2",
+    "revision": "main",
+    "files": [
+      {
+        "path": "onnx/model.onnx",
+        "sha256": "",
+        "size": null
+      }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface",
+      "repo": "intfloat/e5-small-v2",
+      "revision": "main"
+    }
+  },
+  "defaultSource": "huggingface"
+}
