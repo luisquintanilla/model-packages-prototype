@@ -6,10 +6,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackAsTool>true</PackAsTool>
+    <IsPackable>true</IsPackable>
     <ToolCommandName>model-packages</ToolCommandName>
     <PackageId>ModelPackages.Tool</PackageId>
     <Description>CLI tool for prefetching, verifying, and managing model package artifacts.</Description>
+    <PackageReadmeFile>PACKAGE.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="PACKAGE.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ModelPackages\ModelPackages.csproj" />

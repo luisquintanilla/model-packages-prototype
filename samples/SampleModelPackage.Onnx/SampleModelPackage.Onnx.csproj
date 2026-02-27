@@ -4,8 +4,6 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <IsPackable>true</IsPackable>
-    <PackageId>SampleModelPackage.Onnx</PackageId>
     <Description>Sample model package — all-MiniLM-L6-v2 embedding model (raw ONNX from HuggingFace).</Description>
   </PropertyGroup>
 

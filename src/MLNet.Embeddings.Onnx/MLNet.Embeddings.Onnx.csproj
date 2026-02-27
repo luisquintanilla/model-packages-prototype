@@ -4,8 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <IsPackable>true</IsPackable>
-    <PackageId>MLNet.Embeddings.Onnx</PackageId>
+    <!-- Not packaged here — official package ships separately -->
     <Description>ONNX text embedding pipeline for ML.NET — tokenization, inference, pooling, and MEAI integration.</Description>
   </PropertyGroup>
 

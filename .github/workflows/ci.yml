@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+env:
+  DOTNET_NOLOGO: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  NUGET_SOURCE: https://nuget.pkg.github.com/luisquintanilla/index.json
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write    # needed for creating releases
+      packages: write    # needed for pushing to GitHub Packages
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build -c Release --no-restore
+
+      # Determine version: tag-based for releases, preview for main
+      - name: Set version
+        id: version
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#v}"  # strip leading 'v'
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "is_release=true" >> $GITHUB_OUTPUT
+          else
+            VERSION="0.1.0-preview.${{ github.run_number }}"
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "is_release=false" >> $GITHUB_OUTPUT
+          fi
+          echo "Version: $VERSION"
+
+      - name: Pack
+        run: dotnet pack -c Release --no-build -o ./artifacts /p:Version=${{ steps.version.outputs.version }}
+
+      - name: List packages
+        run: ls -la ./artifacts/
+
+      # Push to GitHub Packages (main and tags only, not PRs)
+      - name: Push to GitHub Packages
+        if: github.event_name == 'push'
+        run: |
+          dotnet nuget push ./artifacts/*.nupkg \
+            --source ${{ env.NUGET_SOURCE }} \
+            --api-key ${{ secrets.GITHUB_TOKEN }} \
+            --skip-duplicate
+
+      # Create GitHub Release with .nupkg assets (tags only)
+      - name: Create GitHub Release
+        if: steps.version.outputs.is_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./artifacts/*.*nupkg
+          generate_release_notes: true

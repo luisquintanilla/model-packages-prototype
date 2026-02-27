@@ -150,6 +150,43 @@ dotnet run --project src/ModelPackages.Tool -- info --manifest path/to/model-man
 - **[Authoring Guide](docs/authoring-guide.md)** — How to create your own model package
 - **[CLI Reference](docs/cli-reference.md)** — All commands, options, exit codes, CI/CD patterns
 
+## Using the Packages
+
+The Core SDK and CLI tool are published to [GitHub Packages](https://github.com/luisquintanilla/model-packages-prototype/packages). Preview builds are published on every push to `main`.
+
+### 1. Add the GitHub Packages feed
+
+GitHub Packages requires authentication even for public repos. Create a [personal access token](https://github.com/settings/tokens) with `read:packages` scope, then:
+
+```bash
+dotnet nuget add source https://nuget.pkg.github.com/luisquintanilla/index.json \
+  --name github-luisquintanilla \
+  --username YOUR_GITHUB_USERNAME \
+  --password YOUR_PAT
+```
+
+### 2. Install the Core SDK (for model package authors)
+
+```bash
+dotnet add package ModelPackages --prerelease
+```
+
+### 3. Install the CLI tool
+
+```bash
+dotnet tool install -g ModelPackages.Tool --prerelease \
+  --add-source https://nuget.pkg.github.com/luisquintanilla/index.json
+```
+
+### Alternative: Download from GitHub Releases
+
+Release `.nupkg` files are also attached to [GitHub Releases](https://github.com/luisquintanilla/model-packages-prototype/releases). Download and use with a local NuGet source:
+
+```bash
+dotnet nuget add source /path/to/downloaded/packages --name local
+dotnet add package ModelPackages
+```
+
 ## Technology
 
 - **.NET 10** (preview)
@@ -164,4 +201,4 @@ This is a **prototype / proof of concept** exploring the design space. Not produ
 
 ## License
 
-TBD
+MIT
