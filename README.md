@@ -33,6 +33,13 @@ dotnet run --project samples/SampleConsumer.Onnx
 
 # Run the .mlnet track — uses a pre-built pipeline
 dotnet run --project samples/SampleConsumer.MLNet
+
+# Try other task types
+dotnet run --project samples/SampleConsumer.Classification
+dotnet run --project samples/SampleConsumer.NER
+dotnet run --project samples/SampleConsumer.QA
+dotnet run --project samples/SampleConsumer.Reranking
+dotnet run --project samples/SampleConsumer.TextGeneration
 ```
 
 ### Locally
@@ -48,26 +55,68 @@ dotnet run --project samples/SampleConsumer.Onnx
 
 Both samples generate text embeddings using [all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2), compute cosine similarities, and display results — proving the full pipeline works end-to-end.
 
+## Supported Task Types
+
+The prototype includes sample model packages and consumers for every major ML/AI inference task:
+
+| Task | Model Package | Consumer | Model |
+|------|--------------|----------|-------|
+| **Embedding (ONNX)** | `SampleModelPackage.Onnx` | `SampleConsumer.Onnx` | all-MiniLM-L6-v2 |
+| **Embedding (.mlnet)** | `SampleModelPackage.MLNet` | `SampleConsumer.MLNet` | all-MiniLM-L6-v2 |
+| **Embedding (BGE)** | `SampleModelPackage.BgeEmbedding` | `SampleConsumer.BgeEmbedding` | BGE-small-en-v1.5 |
+| **Embedding (E5)** | `SampleModelPackage.E5Embedding` | `SampleConsumer.E5Embedding` | E5-small-v2 |
+| **Embedding (GTE)** | `SampleModelPackage.GteEmbedding` | `SampleConsumer.GteEmbedding` | GTE-small |
+| **Classification** | `SampleModelPackage.Classification` | `SampleConsumer.Classification` | DistilBERT SST-2 |
+| **Named Entity Recognition** | `SampleModelPackage.NER` | `SampleConsumer.NER` | BERT-base NER |
+| **Question Answering** | `SampleModelPackage.QA` | `SampleConsumer.QA` | MiniLM-Squad2 |
+| **Reranking** | `SampleModelPackage.Reranking` | `SampleConsumer.Reranking` | MS MARCO MiniLM |
+| **Text Generation (local)** | `SampleModelPackage.TextGeneration` | `SampleConsumer.TextGeneration` | Phi-3-mini |
+| **Text Generation (MEAI)** | — | `SampleConsumer.TextGenerationMeai` | Any IChatClient provider |
+
+Each model package embeds a manifest and small assets (vocabs, label maps) while large model binaries are fetched on demand through the Core SDK.
+
 ## Project Map
 
 ```
 model-packages-prototype/
 │
 ├── src/
-│   ├── ModelPackages/              ← Core SDK: fetch, cache, verify (format-agnostic)
-│   ├── MLNet.Embeddings.Onnx/     ← Inference library: ML.NET + MEAI wrappers
-│   └── ModelPackages.Tool/        ← CLI tool: prefetch, verify, info, clear-cache
+│   ├── ModelPackages/                       ← Core SDK: fetch, cache, verify (format-agnostic)
+│   └── ModelPackages.Tool/                  ← CLI tool: prefetch, verify, info, clear-cache
 │
 ├── samples/
-│   ├── SampleModelPackage.Onnx/   ← Model package author: raw ONNX from HuggingFace
-│   ├── SampleConsumer.Onnx/       ← End user: installs package, gets embeddings
-│   ├── SampleModelPackage.MLNet/  ← Model package author: pre-built .mlnet pipeline
-│   └── SampleConsumer.MLNet/      ← End user: same experience, different packaging
+│   │  ── Embeddings ──────────────────────────────────────────────────
+│   ├── SampleModelPackage.Onnx/             ← MiniLM embedding (raw ONNX from HuggingFace)
+│   ├── SampleConsumer.Onnx/                 ← Consumer: cosine similarity demo
+│   ├── SampleModelPackage.MLNet/            ← MiniLM embedding (pre-built .mlnet pipeline)
+│   ├── SampleConsumer.MLNet/                ← Consumer: same API, different packaging
+│   ├── SampleModelPackage.BgeEmbedding/     ← BGE-small-en-v1.5 (query prefix baked in)
+│   ├── SampleConsumer.BgeEmbedding/         ← Consumer: asymmetric retrieval demo
+│   ├── SampleModelPackage.E5Embedding/      ← E5-small-v2 (dual query/passage prefix)
+│   ├── SampleConsumer.E5Embedding/          ← Consumer: dual-prefix retrieval demo
+│   ├── SampleModelPackage.GteEmbedding/     ← GTE-small (no prefix needed)
+│   ├── SampleConsumer.GteEmbedding/         ← Consumer: semantic search demo
+│   │  ── Classification ──────────────────────────────────────────────
+│   ├── SampleModelPackage.Classification/   ← DistilBERT sentiment analysis
+│   ├── SampleConsumer.Classification/       ← Consumer: classify text sentiment
+│   │  ── Named Entity Recognition ────────────────────────────────────
+│   ├── SampleModelPackage.NER/              ← BERT-base NER (person, org, location)
+│   ├── SampleConsumer.NER/                  ← Consumer: extract named entities
+│   │  ── Question Answering ──────────────────────────────────────────
+│   ├── SampleModelPackage.QA/               ← MiniLM-Squad2 extractive QA
+│   ├── SampleConsumer.QA/                   ← Consumer: answer questions from context
+│   │  ── Reranking ───────────────────────────────────────────────────
+│   ├── SampleModelPackage.Reranking/        ← MS MARCO MiniLM cross-encoder
+│   ├── SampleConsumer.Reranking/            ← Consumer: rerank search results
+│   │  ── Text Generation ─────────────────────────────────────────────
+│   ├── SampleModelPackage.TextGeneration/   ← Phi-3-mini local ONNX GenAI
+│   ├── SampleConsumer.TextGeneration/       ← Consumer: local text generation
+│   └── SampleConsumer.TextGenerationMeai/   ← Consumer: provider-agnostic IChatClient
 │
 ├── tools/
-│   └── PrepareMLNetModel/         ← Helper to build .mlnet from raw ONNX + vocab
+│   └── PrepareMLNetModel/                   ← Helper to build .mlnet from raw ONNX + vocab
 │
-└── docs/                          ← Architecture, design decisions, guides
+└── docs/                                    ← Architecture, design decisions, guides
 ```
 
 ## How It Works
@@ -85,9 +134,11 @@ model-packages-prototype/
 │  Embeds: model-manifest.json + vocab.txt                │
 │  Exposes: MiniLMModel.CreateEmbeddingGeneratorAsync()   │
 ├─────────────────────────────────────────────────────────┤
-│  Layer 2: Inference Library (MLNet.Embeddings.Onnx)     │
-│  ML.NET pipeline: tokenize → ONNX → pool → normalize   │
-│  IEmbeddingGenerator<string, Embedding<float>>          │
+│  Layer 2: Inference Library (NuGet packages)            │
+│  MLNet.TextInference.Onnx — embeddings, classification, │
+│    NER, QA, reranking via ML.NET + ONNX Runtime          │
+│  MLNet.TextGeneration.OnnxGenAI — local text generation  │
+│  IEmbeddingGenerator, IChatClient (MEAI abstractions)    │
 ├─────────────────────────────────────────────────────────┤
 │  Layer 1: Core SDK (ModelPackages)                      │
 │  Resolve source → Check cache → Download → SHA256 verify│
@@ -191,8 +242,9 @@ dotnet add package ModelPackages
 
 - **.NET 10** (preview)
 - **ML.NET** — Pipeline construction, ONNX Runtime integration
-- **Microsoft.Extensions.AI** — `IEmbeddingGenerator<string, Embedding<float>>` abstraction
-- **OnnxRuntime** — Model inference
+- **Microsoft.Extensions.AI** — `IEmbeddingGenerator<string, Embedding<float>>` and `IChatClient` abstractions
+- **OnnxRuntime** — Model inference (embeddings, classification, NER, QA, reranking)
+- **ONNX Runtime GenAI** — Local text generation (Phi-3-mini)
 - **System.Text.Json** — Source-generated serialization for manifests
 
 ## Status

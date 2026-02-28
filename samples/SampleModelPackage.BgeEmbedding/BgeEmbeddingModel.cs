@@ -3,26 +3,27 @@ using Microsoft.ML;
 using MLNet.TextInference.Onnx;
 using ModelPackages;
 
-namespace SampleModelPackage.Onnx;
+namespace SampleModelPackage.BgeEmbedding;
 
 /// <summary>
-/// Public API for the all-MiniLM-L6-v2 embedding model package.
-/// Uses raw ONNX from HuggingFace (fetched on demand via Core SDK).
+/// BGE-small-en-v1.5 embedding model package.
+/// For retrieval tasks, queries should be prefixed with "Represent this sentence: "
+/// This prefix is baked into the model package — consumers don't need to know about it.
 /// </summary>
-public static class MiniLMModel
+public static class BgeEmbeddingModel
 {
-    private static readonly Lazy<ModelPackage> Package = new(() =>
-        ModelPackage.FromManifestResource(typeof(MiniLMModel).Assembly));
+    private const string QueryPrefix = "Represent this sentence: ";
 
-    /// <summary>Returns local path to the cached ONNX model file.</summary>
+    private static readonly Lazy<ModelPackage> Package = new(() =>
+        ModelPackage.FromManifestResource(typeof(BgeEmbeddingModel).Assembly));
+
     public static Task<string> EnsureModelAsync(
         ModelOptions? options = null, CancellationToken ct = default)
         => Package.Value.EnsureModelAsync(options, ct);
 
     /// <summary>
-    /// Creates an IEmbeddingGenerator backed by the local ONNX model.
-    /// Downloads the model on first call, cached thereafter.
-    /// Uses MLNet.TextInference.Onnx to build the ML.NET pipeline and wrap it as IEmbeddingGenerator.
+    /// Creates an IEmbeddingGenerator for BGE-small embeddings.
+    /// The query prefix ("Represent this sentence: ") is automatically applied during embedding generation.
     /// </summary>
     public static async Task<IEmbeddingGenerator<string, Embedding<float>>> CreateEmbeddingGeneratorAsync(
         ModelOptions? options = null, CancellationToken ct = default)
@@ -40,47 +41,36 @@ public static class MiniLMModel
             BatchSize = 32
         });
 
-        // Fit with dummy data (probes ONNX metadata, not training)
         var dummyData = mlContext.Data.LoadFromEnumerable(new[] { new TextData { Text = "" } });
         var transformer = estimator.Fit(dummyData);
-
         return new OnnxEmbeddingGenerator(mlContext, transformer, ownsTransformer: true);
     }
+
+    /// <summary>Prepends the BGE query prefix for retrieval tasks.</summary>
+    public static string PrependQueryPrefix(string query) => QueryPrefix + query;
 
     public static Task<ModelInfo> GetModelInfoAsync(
         ModelOptions? options = null, CancellationToken ct = default)
         => Package.Value.GetModelInfoAsync(options, ct);
 
-    public static Task VerifyModelAsync(
-        ModelOptions? options = null, CancellationToken ct = default)
-        => Package.Value.VerifyModelAsync(options, ct);
-
     private static string ExtractEmbeddedVocab()
     {
-        var assembly = typeof(MiniLMModel).Assembly;
-        // Try to find the embedded resource by matching the end of the resource name
+        var assembly = typeof(BgeEmbeddingModel).Assembly;
         var resourceName = assembly.GetManifestResourceNames()
             .FirstOrDefault(n => n.EndsWith("vocab.txt", StringComparison.OrdinalIgnoreCase));
-
         if (resourceName == null)
-            throw new FileNotFoundException("Embedded resource 'vocab.txt' not found in assembly.");
-
-        var tempDir = Path.Combine(Path.GetTempPath(), "modelpackages-vocab");
+            throw new FileNotFoundException("Embedded resource 'vocab.txt' not found.");
+        var tempDir = Path.Combine(Path.GetTempPath(), "modelpackages-vocab-bge");
         Directory.CreateDirectory(tempDir);
         var vocabPath = Path.Combine(tempDir, "vocab.txt");
-
         if (!File.Exists(vocabPath))
         {
             using var stream = assembly.GetManifestResourceStream(resourceName)!;
             using var file = File.Create(vocabPath);
             stream.CopyTo(file);
         }
-
         return vocabPath;
     }
 
-    private sealed class TextData
-    {
-        public string Text { get; set; } = "";
-    }
+    private sealed class TextData { public string Text { get; set; } = ""; }
 }

@@ -1,71 +1,57 @@
-using Microsoft.Extensions.AI;
 using Microsoft.ML;
 using MLNet.TextInference.Onnx;
 using ModelPackages;
 
-namespace SampleModelPackage.Onnx;
+namespace SampleModelPackage.NER;
 
-/// <summary>
-/// Public API for the all-MiniLM-L6-v2 embedding model package.
-/// Uses raw ONNX from HuggingFace (fetched on demand via Core SDK).
-/// </summary>
-public static class MiniLMModel
+public static class NerModel
 {
-    private static readonly Lazy<ModelPackage> Package = new(() =>
-        ModelPackage.FromManifestResource(typeof(MiniLMModel).Assembly));
+    private static readonly string[] Labels = ["O", "B-PER", "I-PER", "B-ORG", "I-ORG", "B-LOC", "I-LOC", "B-MISC", "I-MISC"];
 
-    /// <summary>Returns local path to the cached ONNX model file.</summary>
+    private static readonly Lazy<ModelPackage> Package = new(() =>
+        ModelPackage.FromManifestResource(typeof(NerModel).Assembly));
+
     public static Task<string> EnsureModelAsync(
         ModelOptions? options = null, CancellationToken ct = default)
         => Package.Value.EnsureModelAsync(options, ct);
 
-    /// <summary>
-    /// Creates an IEmbeddingGenerator backed by the local ONNX model.
-    /// Downloads the model on first call, cached thereafter.
-    /// Uses MLNet.TextInference.Onnx to build the ML.NET pipeline and wrap it as IEmbeddingGenerator.
-    /// </summary>
-    public static async Task<IEmbeddingGenerator<string, Embedding<float>>> CreateEmbeddingGeneratorAsync(
+    public static async Task<OnnxNerTransformer> CreateNerPipelineAsync(
         ModelOptions? options = null, CancellationToken ct = default)
     {
         var modelPath = await EnsureModelAsync(options, ct);
         var vocabPath = ExtractEmbeddedVocab();
 
         var mlContext = new MLContext();
-        var estimator = new OnnxTextEmbeddingEstimator(mlContext, new OnnxTextEmbeddingOptions
+        var nerOptions = new OnnxNerOptions
         {
             ModelPath = modelPath,
             TokenizerPath = vocabPath,
-            Pooling = PoolingStrategy.MeanPooling,
-            Normalize = true,
-            BatchSize = 32
-        });
+            Labels = Labels,
+            InputColumnName = "Text",
+            OutputColumnName = "Entities",
+            MaxTokenLength = 128,
+            BatchSize = 8,
+        };
 
-        // Fit with dummy data (probes ONNX metadata, not training)
+        var estimator = mlContext.Transforms.OnnxNer(nerOptions);
         var dummyData = mlContext.Data.LoadFromEnumerable(new[] { new TextData { Text = "" } });
-        var transformer = estimator.Fit(dummyData);
-
-        return new OnnxEmbeddingGenerator(mlContext, transformer, ownsTransformer: true);
+        return estimator.Fit(dummyData);
     }
 
     public static Task<ModelInfo> GetModelInfoAsync(
         ModelOptions? options = null, CancellationToken ct = default)
         => Package.Value.GetModelInfoAsync(options, ct);
 
-    public static Task VerifyModelAsync(
-        ModelOptions? options = null, CancellationToken ct = default)
-        => Package.Value.VerifyModelAsync(options, ct);
-
     private static string ExtractEmbeddedVocab()
     {
-        var assembly = typeof(MiniLMModel).Assembly;
-        // Try to find the embedded resource by matching the end of the resource name
+        var assembly = typeof(NerModel).Assembly;
         var resourceName = assembly.GetManifestResourceNames()
             .FirstOrDefault(n => n.EndsWith("vocab.txt", StringComparison.OrdinalIgnoreCase));
 
         if (resourceName == null)
             throw new FileNotFoundException("Embedded resource 'vocab.txt' not found in assembly.");
 
-        var tempDir = Path.Combine(Path.GetTempPath(), "modelpackages-vocab");
+        var tempDir = Path.Combine(Path.GetTempPath(), "modelpackages-vocab-ner");
         Directory.CreateDirectory(tempDir);
         var vocabPath = Path.Combine(tempDir, "vocab.txt");
 

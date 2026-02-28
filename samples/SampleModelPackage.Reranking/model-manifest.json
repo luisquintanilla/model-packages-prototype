@@ -1,0 +1,21 @@
+{
+  "model": {
+    "id": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "revision": "main",
+    "files": [
+      {
+        "path": "onnx/model.onnx",
+        "sha256": "",
+        "size": null
+      }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface",
+      "repo": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "revision": "main"
+    }
+  },
+  "defaultSource": "huggingface"
+}

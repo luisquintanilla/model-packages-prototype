@@ -1,7 +1,6 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/ModelPackages/ModelPackages.csproj" />
-    <Project Path="src/MLNet.Embeddings.Onnx/MLNet.Embeddings.Onnx.csproj" />
     <Project Path="src/ModelPackages.Tool/ModelPackages.Tool.csproj" />
   </Folder>
   <Folder Name="/samples/onnx/">
@@ -11,5 +10,38 @@
   <Folder Name="/samples/mlnet/">
     <Project Path="samples/SampleModelPackage.MLNet/SampleModelPackage.MLNet.csproj" />
     <Project Path="samples/SampleConsumer.MLNet/SampleConsumer.MLNet.csproj" />
+  </Folder>
+  <Folder Name="/samples/classification/">
+    <Project Path="samples/SampleModelPackage.Classification/SampleModelPackage.Classification.csproj" />
+    <Project Path="samples/SampleConsumer.Classification/SampleConsumer.Classification.csproj" />
+  </Folder>
+  <Folder Name="/samples/ner/">
+    <Project Path="samples/SampleModelPackage.NER/SampleModelPackage.NER.csproj" />
+    <Project Path="samples/SampleConsumer.NER/SampleConsumer.NER.csproj" />
+  </Folder>
+  <Folder Name="/samples/qa/">
+    <Project Path="samples/SampleModelPackage.QA/SampleModelPackage.QA.csproj" />
+    <Project Path="samples/SampleConsumer.QA/SampleConsumer.QA.csproj" />
+  </Folder>
+  <Folder Name="/samples/reranking/">
+    <Project Path="samples/SampleModelPackage.Reranking/SampleModelPackage.Reranking.csproj" />
+    <Project Path="samples/SampleConsumer.Reranking/SampleConsumer.Reranking.csproj" />
+  </Folder>
+  <Folder Name="/samples/textgen/">
+    <Project Path="samples/SampleModelPackage.TextGeneration/SampleModelPackage.TextGeneration.csproj" />
+    <Project Path="samples/SampleConsumer.TextGeneration/SampleConsumer.TextGeneration.csproj" />
+    <Project Path="samples/SampleConsumer.TextGenerationMeai/SampleConsumer.TextGenerationMeai.csproj" />
+  </Folder>
+  <Folder Name="/samples/bge-embedding/">
+    <Project Path="samples/SampleModelPackage.BgeEmbedding/SampleModelPackage.BgeEmbedding.csproj" />
+    <Project Path="samples/SampleConsumer.BgeEmbedding/SampleConsumer.BgeEmbedding.csproj" />
+  </Folder>
+  <Folder Name="/samples/e5-embedding/">
+    <Project Path="samples/SampleModelPackage.E5Embedding/SampleModelPackage.E5Embedding.csproj" />
+    <Project Path="samples/SampleConsumer.E5Embedding/SampleConsumer.E5Embedding.csproj" />
+  </Folder>
+  <Folder Name="/samples/gte-embedding/">
+    <Project Path="samples/SampleModelPackage.GteEmbedding/SampleModelPackage.GteEmbedding.csproj" />
+    <Project Path="samples/SampleConsumer.GteEmbedding/SampleConsumer.GteEmbedding.csproj" />
   </Folder>
 </Solution>

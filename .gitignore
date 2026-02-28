@@ -12,6 +12,7 @@ obj/
 *.snupkg
 **/[Pp]ackages/*
 !**/[Pp]ackages/build/
+local-packages/
 
 # Build results
 [Dd]ebug/
@@ -37,7 +38,6 @@ bld/
 !samples/SampleModelPackage.MLNet/
 !samples/SampleConsumer.Onnx/
 !samples/SampleConsumer.MLNet/
-!src/MLNet.Embeddings.Onnx/
 
 # OS
 Thumbs.db

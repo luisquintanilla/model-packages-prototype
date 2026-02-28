@@ -1,0 +1,21 @@
+{
+  "model": {
+    "id": "distilbert/distilbert-base-uncased-finetuned-sst-2-english",
+    "revision": "main",
+    "files": [
+      {
+        "path": "onnx/model.onnx",
+        "sha256": "",
+        "size": null
+      }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface",
+      "repo": "distilbert/distilbert-base-uncased-finetuned-sst-2-english",
+      "revision": "main"
+    }
+  },
+  "defaultSource": "huggingface"
+}
