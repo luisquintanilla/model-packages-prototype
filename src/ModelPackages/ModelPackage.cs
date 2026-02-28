@@ -74,7 +74,7 @@ public sealed class ModelPackage
             await ModelCache.AtomicWriteAsync(cachePath, async tempPath =>
             {
                 await ModelDownloader.DownloadAsync(url, tempPath, options, cancellationToken);
-                await IntegrityVerifier.VerifyAsync(tempPath, file.Sha256, file.Size, cancellationToken);
+                await IntegrityVerifier.VerifyAsync(tempPath, file.Sha256, file.Size, cancellationToken, log);
             }, cancellationToken);
         }
 
@@ -115,7 +115,7 @@ public sealed class ModelPackage
     {
         var file = _manifest.Model.Files[0];
         var cachePath = ModelCache.GetCachePath(_manifest, file, options);
-        await IntegrityVerifier.VerifyAsync(cachePath, file.Sha256, file.Size, cancellationToken);
+        await IntegrityVerifier.VerifyAsync(cachePath, file.Sha256, file.Size, cancellationToken, options?.Logger);
     }
 
     /// <summary>

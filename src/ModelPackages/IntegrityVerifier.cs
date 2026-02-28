@@ -18,13 +18,14 @@ internal static class IntegrityVerifier
         string filePath,
         string expectedSha256,
         long? expectedSize,
-        CancellationToken ct)
+        CancellationToken ct,
+        Action<string>? log = null)
     {
         if (!File.Exists(filePath))
             throw new FileNotFoundException($"Model file not found at: {filePath}");
 
-        // Optional size check (fast, before hashing)
-        if (expectedSize.HasValue)
+        // Optional size check (fast, before hashing) — skip when size is 0 or null (unknown)
+        if (expectedSize.HasValue && expectedSize.Value > 0)
         {
             var actualSize = new FileInfo(filePath).Length;
             if (actualSize != expectedSize.Value)
@@ -34,6 +35,13 @@ internal static class IntegrityVerifier
                     $"Size mismatch for {filePath}. Expected {expectedSize.Value} bytes, got {actualSize} bytes. " +
                     $"The cached file has been deleted. Set ForceRedownload=true or delete the cache directory.");
             }
+        }
+
+        // Skip SHA256 verification when hash is empty/missing (development workflow)
+        if (string.IsNullOrEmpty(expectedSha256))
+        {
+            log?.Invoke($"Warning: No SHA256 hash in manifest for {Path.GetFileName(filePath)}. Skipping integrity verification. Populate the hash before publishing.");
+            return;
         }
 
         // Streaming SHA256
@@ -62,12 +70,16 @@ internal static class IntegrityVerifier
         if (!File.Exists(filePath))
             return false;
 
-        if (expectedSize.HasValue)
+        if (expectedSize.HasValue && expectedSize.Value > 0)
         {
             var actualSize = new FileInfo(filePath).Length;
             if (actualSize != expectedSize.Value)
                 return false;
         }
+
+        // If SHA256 is empty/missing, we can't validate — treat as invalid (forces re-download)
+        if (string.IsNullOrEmpty(expectedSha256))
+            return false;
 
         var actualSha256 = await ComputeSha256Async(filePath, ct);
         return string.Equals(actualSha256, expectedSha256, StringComparison.OrdinalIgnoreCase);

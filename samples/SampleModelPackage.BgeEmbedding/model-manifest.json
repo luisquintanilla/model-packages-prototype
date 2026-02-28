@@ -6,7 +6,7 @@
       {
         "path": "onnx/model.onnx",
         "sha256": "",
-        "size": null
+        "size": 0
       }
     ]
   },
