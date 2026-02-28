@@ -349,13 +349,13 @@ See: `SampleModelPackage.Onnx`, `SampleModelPackage.BgeEmbedding`, `SampleModelP
 
 ### Classification
 
-Return label + confidence score from `ClassifyAsync(texts)`. Embed the label list (e.g., `["NEGATIVE", "POSITIVE"]`) as an assembly resource.
+Expose a `CreateClassifierAsync()` method that returns an `OnnxTextClassificationTransformer`. The label list (e.g., `["NEGATIVE", "POSITIVE"]`) is defined in code as part of the estimator options. Consumers call classification methods on the returned transformer.
 
 See: `SampleModelPackage.Classification`
 
 ### Named Entity Recognition
 
-Return entity spans (text, label, score) from `ExtractEntitiesAsync(texts)`. Embed the BIO label map as an assembly resource.
+Expose a `CreateNerPipelineAsync()` method that returns an `OnnxNerTransformer`. Consumers call `ExtractEntities` on the transformer to get entity spans (text, label, score). The BIO label list is defined in code (e.g., as a `private static readonly string[] Labels` field).
 
 See: `SampleModelPackage.NER`
 

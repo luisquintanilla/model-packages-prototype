@@ -23,7 +23,7 @@ public static class BgeEmbeddingModel
 
     /// <summary>
     /// Creates an IEmbeddingGenerator for BGE-small embeddings.
-    /// For asymmetric retrieval, use the queryPrefix parameter.
+    /// The query prefix ("Represent this sentence: ") is automatically applied during embedding generation.
     /// </summary>
     public static async Task<IEmbeddingGenerator<string, Embedding<float>>> CreateEmbeddingGeneratorAsync(
         ModelOptions? options = null, CancellationToken ct = default)
