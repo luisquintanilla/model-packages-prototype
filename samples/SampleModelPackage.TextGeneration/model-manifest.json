@@ -6,7 +6,7 @@
       {
         "path": "cpu_and_mobile/cpu-int4-rtn-block-32-acc-level-4/phi3-mini-4k-instruct-cpu-int4-rtn-block-32-acc-level-4.onnx",
         "sha256": "",
-        "size": null
+        "size": 0
       }
     ]
   },
