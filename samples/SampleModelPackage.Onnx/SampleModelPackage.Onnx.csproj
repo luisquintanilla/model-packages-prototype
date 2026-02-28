@@ -14,7 +14,6 @@
 
   <ItemGroup>
     <EmbeddedResource Include="model-manifest.json" />
-    <EmbeddedResource Include="vocab.txt" Condition="Exists('vocab.txt')" />
   </ItemGroup>
 
   <ItemGroup>

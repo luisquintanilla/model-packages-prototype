@@ -12,9 +12,9 @@ This guide walks through creating a model package — a small NuGet package that
 
 A model package has three components:
 
-1. **Manifest** (`model-manifest.json`) — Describes the model: where to download it, expected SHA256 hash, file size
-2. **Small assets** — Files small enough to embed (tokenizer vocabulary, config files — typically < 1 MB)
-3. **Public API** — A static class that wires everything together and exposes a simple interface to consumers
+1. **Manifest** (`model-manifest.json`) — Describes the model: where to download it, expected SHA256 hash, file size. Supports multiple files (e.g., ONNX model + vocabulary).
+2. **Public API** — A static class that wires everything together and exposes a simple interface to consumers
+3. **Small assets** (optional) — Files small enough to embed (config files, label maps). Tokenizer vocabularies are typically listed in the manifest and downloaded on demand.
 
 The heavy model binary is *never* in the package. It's fetched at runtime.
 
@@ -33,7 +33,7 @@ dotnet add package MLNet.TextInference.Onnx --version 0.1.0-preview.1
 
 ### 2. Create the manifest
 
-Create `model-manifest.json` in your project root:
+Create `model-manifest.json` in your project root. List all files the model needs — both the ONNX model and any tokenizer files:
 
 ```json
 {
@@ -45,6 +45,11 @@ Create `model-manifest.json` in your project root:
         "path": "onnx/model.onnx",
         "sha256": "6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452",
         "size": 90405214
+      },
+      {
+        "path": "vocab.txt",
+        "sha256": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3",
+        "size": 231508
       }
     ]
   },
@@ -57,6 +62,8 @@ Create `model-manifest.json` in your project root:
 }
 ```
 
+The first file in the `files` array is the **primary model file** (returned by `EnsureModelAsync()`). Additional files (tokenizer vocabularies, config files) are downloaded alongside it when using `EnsureFilesAsync()`.
+
 **Getting the SHA256:** For HuggingFace models, the SHA256 is the Git LFS OID. You can find it on the model page under "Files and versions" → click the file → look for the LFS pointer, or run:
 
 ```bash
@@ -65,16 +72,17 @@ huggingface-cli download sentence-transformers/all-MiniLM-L6-v2 onnx/model.onnx
 sha256sum ~/.cache/huggingface/hub/models--sentence-transformers--all-MiniLM-L6-v2/blobs/<hash>
 ```
 
-### 3. Embed the manifest and small assets
+### 3. Embed the manifest
 
 In your `.csproj`:
 
 ```xml
 <ItemGroup>
   <EmbeddedResource Include="model-manifest.json" />
-  <EmbeddedResource Include="vocab.txt" />
 </ItemGroup>
 ```
+
+> **Note:** Tokenizer files (vocab.txt, etc.) should be listed in the manifest `files` array instead of embedded as assembly resources. This keeps NuGet packages small and lets the SDK handle downloading, caching, and integrity verification for all files uniformly.
 
 ### 4. Create the public API
 
@@ -94,13 +102,12 @@ public static class MyModel
     public static async Task<IEmbeddingGenerator<string, Embedding<float>>>
         CreateEmbeddingGeneratorAsync(ModelOptions? options = null, CancellationToken ct = default)
     {
-        // 1. Ensure the ONNX model is downloaded and cached
-        var modelPath = await Package.Value.EnsureModelAsync(options, ct);
+        // 1. Ensure all files (ONNX model + vocab) are downloaded and cached
+        var files = await Package.Value.EnsureFilesAsync(options, ct);
+        var modelPath = files.PrimaryModelPath;
+        var vocabPath = files.GetPath("vocab.txt");
 
-        // 2. Extract embedded vocab to a temp location
-        var vocabPath = ExtractEmbeddedVocab();
-
-        // 3. Build the ML.NET pipeline
+        // 2. Build the ML.NET pipeline
         var mlContext = new MLContext();
         var estimator = new OnnxTextEmbeddingEstimator(mlContext, new OnnxTextEmbeddingOptions
         {
@@ -125,26 +132,6 @@ public static class MyModel
     public static Task<ModelInfo> GetModelInfoAsync(
         ModelOptions? options = null, CancellationToken ct = default)
         => Package.Value.GetModelInfoAsync(options, ct);
-
-    private static string ExtractEmbeddedVocab()
-    {
-        var assembly = typeof(MyModel).Assembly;
-        var resourceName = assembly.GetManifestResourceNames()
-            .First(n => n.EndsWith("vocab.txt"));
-
-        var tempDir = Path.Combine(Path.GetTempPath(), "MyModelPackage");
-        Directory.CreateDirectory(tempDir);
-        var vocabPath = Path.Combine(tempDir, "vocab.txt");
-
-        if (!File.Exists(vocabPath))
-        {
-            using var stream = assembly.GetManifestResourceStream(resourceName)!;
-            using var file = File.Create(vocabPath);
-            stream.CopyTo(file);
-        }
-
-        return vocabPath;
-    }
 
     private sealed class TextInput
     {
@@ -316,6 +303,51 @@ var generator = await MiniLMModel.CreateEmbeddingGeneratorAsync(new ModelOptions
 ```
 
 ## Important Notes
+
+### Multi-File Manifests
+
+The manifest `files` array supports multiple entries. Use this when your model needs additional files beyond the ONNX binary (tokenizer vocabulary, config files, etc.):
+
+```json
+"files": [
+  { "path": "onnx/model.onnx", "sha256": "...", "size": 133093490 },
+  { "path": "vocab.txt", "sha256": "...", "size": 231508 }
+]
+```
+
+In your facade, use `EnsureFilesAsync()` to download all files at once:
+
+```csharp
+var files = await Package.Value.EnsureFilesAsync(options, ct);
+var modelPath = files.PrimaryModelPath;        // First file in manifest
+var vocabPath = files.GetPath("vocab.txt");     // Any file by manifest path
+```
+
+The `ModelFiles` result type provides:
+- `PrimaryModelPath` — path to the first file in the manifest
+- `GetPath(manifestPath)` — path to any file by its manifest path
+- `HasFile(manifestPath)` — check if a file is in the manifest
+- `ModelDirectory` — directory containing the primary model file
+
+### Extracting Embedded Resources
+
+For resources that must be embedded in the NuGet package itself (e.g., custom label maps not available from HuggingFace), use the `ExtractResources()` utility instead of writing your own extraction boilerplate:
+
+```csharp
+var resourceDir = ModelPackage.ExtractResources(
+    typeof(MyModel).Assembly, "MyModel");
+var labelMapPath = Path.Combine(resourceDir, "labels.txt");
+```
+
+This extracts matching resources to a model-specific cache directory. Default patterns cover common tokenizer files (`vocab.txt`, `vocab.json`, `merges.txt`, `spm.model`, `tokenizer.json`, etc.). You can pass custom patterns:
+
+```csharp
+var resourceDir = ModelPackage.ExtractResources(
+    typeof(MyModel).Assembly, "MyModel",
+    filePatterns: ["labels.txt", "config.json"]);
+```
+
+> **Prefer multi-file manifests** over embedded resources for files available from HuggingFace. Embedded resources increase NuGet package size. Use `ExtractResources()` only for files that must ship with the package.
 
 ### OnnxRuntime Native Binaries
 

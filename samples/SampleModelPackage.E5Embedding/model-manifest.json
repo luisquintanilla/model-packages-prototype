@@ -4,9 +4,14 @@
     "revision": "main",
     "files": [
       {
-        "path": "onnx/model.onnx",
-        "sha256": "",
-        "size": 0
+        "path": "model.onnx",
+        "sha256": "4b8205be2a3c5fc53c6534d76a2012064f7309c162b806f2889c6ec8ec4fdcba",
+        "size": 133093468
+      },
+      {
+        "path": "vocab.txt",
+        "sha256": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3",
+        "size": 231508
       }
     ]
   },

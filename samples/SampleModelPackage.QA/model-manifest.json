@@ -7,6 +7,11 @@
         "path": "onnx/model.onnx",
         "sha256": "",
         "size": 0
+      },
+      {
+        "path": "vocab.txt",
+        "sha256": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3",
+        "size": 231508
       }
     ]
   },

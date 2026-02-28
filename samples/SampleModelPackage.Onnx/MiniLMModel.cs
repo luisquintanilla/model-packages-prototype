@@ -27,8 +27,9 @@ public static class MiniLMModel
     public static async Task<IEmbeddingGenerator<string, Embedding<float>>> CreateEmbeddingGeneratorAsync(
         ModelOptions? options = null, CancellationToken ct = default)
     {
-        var modelPath = await EnsureModelAsync(options, ct);
-        var vocabPath = ExtractEmbeddedVocab();
+        var files = await Package.Value.EnsureFilesAsync(options, ct);
+        var modelPath = files.PrimaryModelPath;
+        var vocabPath = files.GetPath("vocab.txt");
 
         var mlContext = new MLContext();
         var estimator = new OnnxTextEmbeddingEstimator(mlContext, new OnnxTextEmbeddingOptions
@@ -54,30 +55,6 @@ public static class MiniLMModel
     public static Task VerifyModelAsync(
         ModelOptions? options = null, CancellationToken ct = default)
         => Package.Value.VerifyModelAsync(options, ct);
-
-    private static string ExtractEmbeddedVocab()
-    {
-        var assembly = typeof(MiniLMModel).Assembly;
-        // Try to find the embedded resource by matching the end of the resource name
-        var resourceName = assembly.GetManifestResourceNames()
-            .FirstOrDefault(n => n.EndsWith("vocab.txt", StringComparison.OrdinalIgnoreCase));
-
-        if (resourceName == null)
-            throw new FileNotFoundException("Embedded resource 'vocab.txt' not found in assembly.");
-
-        var tempDir = Path.Combine(Path.GetTempPath(), "modelpackages-vocab");
-        Directory.CreateDirectory(tempDir);
-        var vocabPath = Path.Combine(tempDir, "vocab.txt");
-
-        if (!File.Exists(vocabPath))
-        {
-            using var stream = assembly.GetManifestResourceStream(resourceName)!;
-            using var file = File.Create(vocabPath);
-            stream.CopyTo(file);
-        }
-
-        return vocabPath;
-    }
 
     private sealed class TextData
     {

@@ -22,7 +22,7 @@ internal static class ModelCache
     }
 
     /// <summary>Get the OS-appropriate default cache directory.</summary>
-    private static string GetDefaultCacheDir()
+    internal static string GetDefaultCacheDir()
     {
         if (OperatingSystem.IsWindows())
         {

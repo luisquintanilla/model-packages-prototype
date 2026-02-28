@@ -11,7 +11,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="model-manifest.json" />
-    <EmbeddedResource Include="vocab.txt" Condition="Exists('vocab.txt')" />
   </ItemGroup>
   <ItemGroup>
     <None Include="build\SampleModelPackage.QA.props" Pack="true" PackagePath="build\" />
