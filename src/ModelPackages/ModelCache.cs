@@ -14,11 +14,11 @@ internal static class ModelCache
     public static string GetCachePath(ModelManifest manifest, ModelManifest.ModelFileInfo file, ModelOptions? options)
     {
         var baseDir = ResolveCacheDir(options);
-        // Structure: {baseDir}/{modelId}/{revision}/{fileName}
+        // Structure: {baseDir}/{modelId}/{revision}/{relativePath}
         var modelId = manifest.Model.Id.Replace('/', Path.DirectorySeparatorChar);
         var revision = manifest.Model.Revision ?? "main";
-        var fileName = Path.GetFileName(file.Path);
-        return Path.Combine(baseDir, modelId, revision, fileName);
+        var relativePath = file.Path.Replace('/', Path.DirectorySeparatorChar);
+        return Path.Combine(baseDir, modelId, revision, relativePath);
     }
 
     /// <summary>Get the OS-appropriate default cache directory.</summary>

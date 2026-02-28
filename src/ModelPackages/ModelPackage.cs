@@ -41,19 +41,21 @@ public sealed class ModelPackage
     {
         var log = options?.Logger ?? (_ => { });
         var paths = new Dictionary<string, string>();
+        string? primaryPath = null;
 
         foreach (var file in _manifest.Model.Files)
         {
             var cachePath = await EnsureFileAsync(file, options, log, cancellationToken);
             paths[file.Path] = cachePath;
+            primaryPath ??= cachePath;
         }
 
-        return new ModelFiles(paths);
+        return new ModelFiles(paths, primaryPath!);
     }
 
     /// <summary>
     /// Ensures the primary model file is present locally. Downloads if missing, verifies integrity, returns absolute local path.
-    /// For multi-file models, prefer <see cref="EnsureFilesAsync"/> which downloads all files.
+    /// For multi-file models, use <see cref="EnsureFilesAsync"/> if you need local paths for all files, not just the primary model file.
     /// </summary>
     public async Task<string> EnsureModelAsync(
         ModelOptions? options = null,
@@ -130,6 +132,10 @@ public sealed class ModelPackage
         string modelName,
         string[]? filePatterns = null)
     {
+        ArgumentNullException.ThrowIfNull(modelName);
+        if (modelName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || modelName.Contains(".."))
+            throw new ArgumentException($"Invalid model name '{modelName}'. Must not contain path separators or '..'.", nameof(modelName));
+
         filePatterns ??= DefaultResourcePatterns;
 
         var cacheDir = Path.Combine(
@@ -143,11 +149,15 @@ public sealed class ModelPackage
             if (matchedFile == null) continue;
 
             var targetPath = Path.Combine(cacheDir, matchedFile);
-            if (!File.Exists(targetPath))
+            try
             {
                 using var stream = assembly.GetManifestResourceStream(resourceName)!;
-                using var file = File.Create(targetPath);
+                using var file = new FileStream(targetPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
                 stream.CopyTo(file);
+            }
+            catch (IOException)
+            {
+                // File already exists — another thread/process extracted it concurrently.
             }
         }
 

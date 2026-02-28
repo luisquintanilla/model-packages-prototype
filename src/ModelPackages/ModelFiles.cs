@@ -6,17 +6,19 @@ namespace ModelPackages;
 public sealed class ModelFiles
 {
     private readonly IReadOnlyDictionary<string, string> _files;
+    private readonly string _primaryModelPath;
 
-    internal ModelFiles(IReadOnlyDictionary<string, string> files)
+    internal ModelFiles(IReadOnlyDictionary<string, string> files, string primaryModelPath)
     {
         _files = files;
+        _primaryModelPath = primaryModelPath;
     }
 
     /// <summary>All cached file paths, keyed by their manifest path (e.g., "onnx/model.onnx").</summary>
     public IReadOnlyDictionary<string, string> Files => _files;
 
     /// <summary>Path to the primary model file (first entry in the manifest).</summary>
-    public string PrimaryModelPath => _files.Values.First();
+    public string PrimaryModelPath => _primaryModelPath;
 
     /// <summary>Directory containing the primary model file.</summary>
     public string ModelDirectory => Path.GetDirectoryName(PrimaryModelPath)!;
