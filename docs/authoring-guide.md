@@ -374,7 +374,7 @@ See: `SampleModelPackage.Reranking`
 ### Text Generation
 
 Two tracks:
-- **Local ONNX GenAI**: Return `IChatClient` from `CreateChatClientAsync()` using `MLNet.TextGeneration.OnnxGenAI`.
+- **Local ONNX GenAI**: Expose `CreateGeneratorAsync()` returning an `OnnxTextGenerationTransformer` using `MLNet.TextGeneration.OnnxGenAI`.
 - **Provider-agnostic MEAI**: Use any `IChatClient` provider (OpenAI, Azure, Ollama) — no model package needed.
 
 See: `SampleModelPackage.TextGeneration`, `SampleConsumer.TextGenerationMeai`

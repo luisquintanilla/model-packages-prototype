@@ -14,7 +14,7 @@ public static class Phi3Model
     private static readonly Lazy<ModelPackage> Package = new(() =>
         ModelPackage.FromManifestResource(typeof(Phi3Model).Assembly));
 
-    /// <summary>Returns local path to the cached model directory.</summary>
+    /// <summary>Returns local path to the cached model file.</summary>
     public static Task<string> EnsureModelAsync(
         ModelOptions? options = null, CancellationToken ct = default)
         => Package.Value.EnsureModelAsync(options, ct);
@@ -26,7 +26,7 @@ public static class Phi3Model
         ModelOptions? options = null, CancellationToken ct = default)
     {
         var modelPath = await EnsureModelAsync(options, ct);
-        // The model path points to a directory containing the ONNX GenAI model files
+        // EnsureModelAsync returns a file path; derive the model directory for GenAI
         var modelDir = Path.GetDirectoryName(modelPath)!;
 
         var mlContext = new MLContext();
