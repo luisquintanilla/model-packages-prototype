@@ -32,6 +32,16 @@ jobs:
           dotnet-version: '10.0.x'
           dotnet-quality: 'preview'
 
+      - name: Configure GitHub Packages auth
+        run: dotnet nuget update source github-packages --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text
+
+      - name: Build inference packages from source
+        shell: bash
+        run: |
+          git clone --depth 1 https://github.com/luisquintanilla/mlnet-text-inference-custom-transforms.git ./temp-inference
+          dotnet pack ./temp-inference -c Release -o ./local-packages -p:MinVerVersionOverride=0.1.0-preview.1
+          rm -rf ./temp-inference
+
       - name: Restore
         run: dotnet restore
 
