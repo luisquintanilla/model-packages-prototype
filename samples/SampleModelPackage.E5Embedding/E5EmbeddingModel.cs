@@ -25,8 +25,9 @@ public static class E5EmbeddingModel
     public static async Task<IEmbeddingGenerator<string, Embedding<float>>> CreateEmbeddingGeneratorAsync(
         ModelOptions? options = null, CancellationToken ct = default)
     {
-        var modelPath = await EnsureModelAsync(options, ct);
-        var vocabPath = ExtractEmbeddedVocab();
+        var files = await Package.Value.EnsureFilesAsync(options, ct);
+        var modelPath = files.PrimaryModelPath;
+        var vocabPath = files.GetPath("vocab.txt");
 
         var mlContext = new MLContext();
         var estimator = new OnnxTextEmbeddingEstimator(mlContext, new OnnxTextEmbeddingOptions
@@ -52,25 +53,6 @@ public static class E5EmbeddingModel
     public static Task<ModelInfo> GetModelInfoAsync(
         ModelOptions? options = null, CancellationToken ct = default)
         => Package.Value.GetModelInfoAsync(options, ct);
-
-    private static string ExtractEmbeddedVocab()
-    {
-        var assembly = typeof(E5EmbeddingModel).Assembly;
-        var resourceName = assembly.GetManifestResourceNames()
-            .FirstOrDefault(n => n.EndsWith("vocab.txt", StringComparison.OrdinalIgnoreCase));
-        if (resourceName == null)
-            throw new FileNotFoundException("Embedded resource 'vocab.txt' not found.");
-        var tempDir = Path.Combine(Path.GetTempPath(), "modelpackages-vocab-e5");
-        Directory.CreateDirectory(tempDir);
-        var vocabPath = Path.Combine(tempDir, "vocab.txt");
-        if (!File.Exists(vocabPath))
-        {
-            using var stream = assembly.GetManifestResourceStream(resourceName)!;
-            using var file = File.Create(vocabPath);
-            stream.CopyTo(file);
-        }
-        return vocabPath;
-    }
 
     private sealed class TextData { public string Text { get; set; } = ""; }
 }

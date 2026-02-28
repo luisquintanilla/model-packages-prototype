@@ -32,54 +32,37 @@ public sealed class ModelPackage
     // ── Public API ───────────────────────────────────────────────────
 
     /// <summary>
-    /// Ensures the model is present locally. Downloads if missing, verifies integrity, returns absolute local path.
+    /// Ensures all model files are present locally. Downloads if missing, verifies integrity.
+    /// Returns a <see cref="ModelFiles"/> with cached local paths for every file in the manifest.
+    /// </summary>
+    public async Task<ModelFiles> EnsureFilesAsync(
+        ModelOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        var log = options?.Logger ?? (_ => { });
+        var paths = new Dictionary<string, string>();
+        string? primaryPath = null;
+
+        foreach (var file in _manifest.Model.Files)
+        {
+            var cachePath = await EnsureFileAsync(file, options, log, cancellationToken);
+            paths[file.Path] = cachePath;
+            primaryPath ??= cachePath;
+        }
+
+        return new ModelFiles(paths, primaryPath!);
+    }
+
+    /// <summary>
+    /// Ensures the primary model file is present locally. Downloads if missing, verifies integrity, returns absolute local path.
+    /// For multi-file models, use <see cref="EnsureFilesAsync"/> if you need local paths for all files, not just the primary model file.
     /// </summary>
     public async Task<string> EnsureModelAsync(
         ModelOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        var file = _manifest.Model.Files[0]; // MVP: single file
-        var log = options?.Logger ?? (_ => { });
-
-        // Resolve cache path
-        var cachePath = ModelCache.GetCachePath(_manifest, file, options);
-
-        // Fast path: cached file exists and verifies
-        if (!options?.ForceRedownload == true)
-        {
-            if (await IntegrityVerifier.IsValidAsync(cachePath, file.Sha256, file.Size, cancellationToken))
-            {
-                log($"Model already cached and verified at: {cachePath}");
-                return cachePath;
-            }
-        }
-
-        // Resolve source URL
-        var (url, sourceName) = ModelSourceResolver.Resolve(_manifest, file, options, log);
-
-        // Acquire lock and download
-        using (await ModelCache.AcquireLockAsync(cachePath, cancellationToken))
-        {
-            // Double-check after acquiring lock (another process may have downloaded)
-            if (!options?.ForceRedownload == true)
-            {
-                if (await IntegrityVerifier.IsValidAsync(cachePath, file.Sha256, file.Size, cancellationToken))
-                {
-                    log($"Model appeared in cache while waiting for lock: {cachePath}");
-                    return cachePath;
-                }
-            }
-
-            // Atomic download: write to temp, verify, rename
-            await ModelCache.AtomicWriteAsync(cachePath, async tempPath =>
-            {
-                await ModelDownloader.DownloadAsync(url, tempPath, options, cancellationToken);
-                await IntegrityVerifier.VerifyAsync(tempPath, file.Sha256, file.Size, cancellationToken, log);
-            }, cancellationToken);
-        }
-
-        log($"Model cached at: {cachePath}");
-        return cachePath;
+        var files = await EnsureFilesAsync(options, cancellationToken);
+        return files.PrimaryModelPath;
     }
 
     /// <summary>
@@ -106,26 +89,126 @@ public sealed class ModelPackage
     }
 
     /// <summary>
-    /// Verifies the cached model's integrity (SHA256 + optional size check).
-    /// Throws if the file is missing or fails verification.
+    /// Verifies all cached model files' integrity (SHA256 + optional size check).
+    /// Throws if any file is missing or fails verification.
     /// </summary>
     public async Task VerifyModelAsync(
         ModelOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        var file = _manifest.Model.Files[0];
-        var cachePath = ModelCache.GetCachePath(_manifest, file, options);
-        await IntegrityVerifier.VerifyAsync(cachePath, file.Sha256, file.Size, cancellationToken, options?.Logger);
+        foreach (var file in _manifest.Model.Files)
+        {
+            var cachePath = ModelCache.GetCachePath(_manifest, file, options);
+            await IntegrityVerifier.VerifyAsync(cachePath, file.Sha256, file.Size, cancellationToken, options?.Logger);
+        }
     }
 
     /// <summary>
-    /// Removes the cached model file.
+    /// Removes all cached model files.
     /// </summary>
     public void ClearCache(ModelOptions? options = null)
     {
-        var file = _manifest.Model.Files[0];
+        foreach (var file in _manifest.Model.Files)
+        {
+            var cachePath = ModelCache.GetCachePath(_manifest, file, options);
+            if (File.Exists(cachePath))
+                File.Delete(cachePath);
+        }
+    }
+
+    // ── Static utilities ────────────────────────────────────────────
+
+    private static readonly string[] DefaultResourcePatterns =
+        ["vocab.txt", "vocab.json", "merges.txt", "spm.model", "tokenizer.json",
+         "tokenizer.model", "tokenizer_config.json", "special_tokens_map.json"];
+
+    /// <summary>
+    /// Extracts embedded resources matching the given file patterns from an assembly
+    /// to a model-specific cache directory.
+    /// Returns the directory path containing the extracted files.
+    /// </summary>
+    public static string ExtractResources(
+        Assembly assembly,
+        string modelName,
+        string[]? filePatterns = null)
+    {
+        ArgumentNullException.ThrowIfNull(modelName);
+        if (modelName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || modelName.Contains(".."))
+            throw new ArgumentException($"Invalid model name '{modelName}'. Must not contain path separators or '..'.", nameof(modelName));
+
+        filePatterns ??= DefaultResourcePatterns;
+
+        var cacheDir = Path.Combine(
+            ModelCache.GetDefaultCacheDir(), "resource-cache", modelName);
+        Directory.CreateDirectory(cacheDir);
+
+        foreach (var resourceName in assembly.GetManifestResourceNames())
+        {
+            var matchedFile = filePatterns
+                .FirstOrDefault(p => resourceName.EndsWith(p, StringComparison.OrdinalIgnoreCase));
+            if (matchedFile == null) continue;
+
+            var targetPath = Path.Combine(cacheDir, matchedFile);
+            try
+            {
+                using var stream = assembly.GetManifestResourceStream(resourceName)!;
+                using var file = new FileStream(targetPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+                stream.CopyTo(file);
+            }
+            catch (IOException)
+            {
+                // File already exists — another thread/process extracted it concurrently.
+            }
+        }
+
+        return cacheDir;
+    }
+
+    // ── Private helpers ──────────────────────────────────────────────
+
+    private async Task<string> EnsureFileAsync(
+        ModelManifest.ModelFileInfo file,
+        ModelOptions? options,
+        Action<string> log,
+        CancellationToken cancellationToken)
+    {
         var cachePath = ModelCache.GetCachePath(_manifest, file, options);
-        if (File.Exists(cachePath))
-            File.Delete(cachePath);
+
+        // Fast path: cached file exists and verifies
+        if (!options?.ForceRedownload == true)
+        {
+            if (await IntegrityVerifier.IsValidAsync(cachePath, file.Sha256, file.Size, cancellationToken))
+            {
+                log($"File already cached and verified at: {cachePath}");
+                return cachePath;
+            }
+        }
+
+        // Resolve source URL
+        var (url, sourceName) = ModelSourceResolver.Resolve(_manifest, file, options, log);
+
+        // Acquire lock and download
+        using (await ModelCache.AcquireLockAsync(cachePath, cancellationToken))
+        {
+            // Double-check after acquiring lock (another process may have downloaded)
+            if (!options?.ForceRedownload == true)
+            {
+                if (await IntegrityVerifier.IsValidAsync(cachePath, file.Sha256, file.Size, cancellationToken))
+                {
+                    log($"File appeared in cache while waiting for lock: {cachePath}");
+                    return cachePath;
+                }
+            }
+
+            // Atomic download: write to temp, verify, rename
+            await ModelCache.AtomicWriteAsync(cachePath, async tempPath =>
+            {
+                await ModelDownloader.DownloadAsync(url, tempPath, options, cancellationToken);
+                await IntegrityVerifier.VerifyAsync(tempPath, file.Sha256, file.Size, cancellationToken, log);
+            }, cancellationToken);
+        }
+
+        log($"File cached at: {cachePath}");
+        return cachePath;
     }
 }

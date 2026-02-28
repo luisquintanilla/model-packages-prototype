@@ -1,19 +1,24 @@
 {
   "model": {
-    "id": "deepset/minilm-uncased-squad2",
+    "id": "lquint/minilm-uncased-squad2-onnx",
     "revision": "main",
     "files": [
       {
-        "path": "onnx/model.onnx",
-        "sha256": "",
-        "size": 0
+        "path": "model.onnx",
+        "sha256": "4ccf9d76e63989ef85f1041815cd7823ea2f1ebfec80b3987afd587d8b342845",
+        "size": 133062014
+      },
+      {
+        "path": "vocab.txt",
+        "sha256": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3",
+        "size": 231508
       }
     ]
   },
   "sources": {
     "huggingface": {
       "type": "huggingface",
-      "repo": "deepset/minilm-uncased-squad2",
+      "repo": "lquint/minilm-uncased-squad2-onnx",
       "revision": "main"
     }
   },

@@ -5,8 +5,13 @@
     "files": [
       {
         "path": "onnx/model.onnx",
-        "sha256": "",
-        "size": 0
+        "sha256": "828e1496d7fabb79cfa4dcd84fa38625c0d3d21da474a00f08db0f559940cf35",
+        "size": 133093490
+      },
+      {
+        "path": "vocab.txt",
+        "sha256": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3",
+        "size": 231508
       }
     ]
   },

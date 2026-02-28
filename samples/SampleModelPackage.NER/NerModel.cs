@@ -18,8 +18,9 @@ public static class NerModel
     public static async Task<OnnxNerTransformer> CreateNerPipelineAsync(
         ModelOptions? options = null, CancellationToken ct = default)
     {
-        var modelPath = await EnsureModelAsync(options, ct);
-        var vocabPath = ExtractEmbeddedVocab();
+        var files = await Package.Value.EnsureFilesAsync(options, ct);
+        var modelPath = files.PrimaryModelPath;
+        var vocabPath = files.GetPath("vocab.txt");
 
         var mlContext = new MLContext();
         var nerOptions = new OnnxNerOptions
@@ -41,29 +42,6 @@ public static class NerModel
     public static Task<ModelInfo> GetModelInfoAsync(
         ModelOptions? options = null, CancellationToken ct = default)
         => Package.Value.GetModelInfoAsync(options, ct);
-
-    private static string ExtractEmbeddedVocab()
-    {
-        var assembly = typeof(NerModel).Assembly;
-        var resourceName = assembly.GetManifestResourceNames()
-            .FirstOrDefault(n => n.EndsWith("vocab.txt", StringComparison.OrdinalIgnoreCase));
-
-        if (resourceName == null)
-            throw new FileNotFoundException("Embedded resource 'vocab.txt' not found in assembly.");
-
-        var tempDir = Path.Combine(Path.GetTempPath(), "modelpackages-vocab-ner");
-        Directory.CreateDirectory(tempDir);
-        var vocabPath = Path.Combine(tempDir, "vocab.txt");
-
-        if (!File.Exists(vocabPath))
-        {
-            using var stream = assembly.GetManifestResourceStream(resourceName)!;
-            using var file = File.Create(vocabPath);
-            stream.CopyTo(file);
-        }
-
-        return vocabPath;
-    }
 
     private sealed class TextData
     {
