@@ -15,6 +15,9 @@ public sealed record ModelOptions
     /// <summary>Force re-download even if cached file exists and verifies.</summary>
     public bool ForceRedownload { get; init; } = false;
 
+    /// <summary>Force full SHA256 re-verification, ignoring sidecar .sha256 fast-path.</summary>
+    public bool ForceVerification { get; init; } = false;
+
     /// <summary>Logger callback for progress and status messages.</summary>
     public Action<string>? Logger { get; init; }
 }

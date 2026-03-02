@@ -113,6 +113,7 @@ public sealed class ModelPackage
             var cachePath = ModelCache.GetCachePath(_manifest, file, options);
             if (File.Exists(cachePath))
                 File.Delete(cachePath);
+            IntegrityVerifier.DeleteSidecar(cachePath);
         }
     }
 
@@ -173,12 +174,25 @@ public sealed class ModelPackage
         CancellationToken cancellationToken)
     {
         var cachePath = ModelCache.GetCachePath(_manifest, file, options);
+        var forceVerification = options?.ForceVerification ?? false;
 
         // Fast path: cached file exists and verifies
         if (!options?.ForceRedownload == true)
         {
+            // Try sidecar fast-path first (unless ForceVerification is set)
+            if (!forceVerification &&
+                IntegrityVerifier.QuickValidate(cachePath, file.Sha256, file.Size))
+            {
+                log($"File already cached (sidecar verified) at: {cachePath}");
+                return cachePath;
+            }
+
+            // Full SHA256 validation
             if (await IntegrityVerifier.IsValidAsync(cachePath, file.Sha256, file.Size, cancellationToken))
             {
+                // Write/refresh sidecar for next time
+                if (!string.IsNullOrEmpty(file.Sha256))
+                    IntegrityVerifier.WriteSidecar(cachePath, file.Sha256);
                 log($"File already cached and verified at: {cachePath}");
                 return cachePath;
             }
@@ -193,8 +207,17 @@ public sealed class ModelPackage
             // Double-check after acquiring lock (another process may have downloaded)
             if (!options?.ForceRedownload == true)
             {
+                if (!forceVerification &&
+                    IntegrityVerifier.QuickValidate(cachePath, file.Sha256, file.Size))
+                {
+                    log($"File appeared in cache while waiting for lock: {cachePath}");
+                    return cachePath;
+                }
+
                 if (await IntegrityVerifier.IsValidAsync(cachePath, file.Sha256, file.Size, cancellationToken))
                 {
+                    if (!string.IsNullOrEmpty(file.Sha256))
+                        IntegrityVerifier.WriteSidecar(cachePath, file.Sha256);
                     log($"File appeared in cache while waiting for lock: {cachePath}");
                     return cachePath;
                 }
@@ -206,6 +229,10 @@ public sealed class ModelPackage
                 await ModelDownloader.DownloadAsync(url, tempPath, options, cancellationToken);
                 await IntegrityVerifier.VerifyAsync(tempPath, file.Sha256, file.Size, cancellationToken, log);
             }, cancellationToken);
+
+            // Write sidecar after successful download and verification
+            if (!string.IsNullOrEmpty(file.Sha256))
+                IntegrityVerifier.WriteSidecar(cachePath, file.Sha256);
         }
 
         log($"File cached at: {cachePath}");

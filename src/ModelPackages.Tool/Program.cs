@@ -71,7 +71,7 @@ static async Task<int> RunAsync(string[] args)
             case "prefetch":
                 return await PrefetchAsync(package, options);
             case "verify":
-                return await VerifyAsync(package, options);
+                return await VerifyAsync(package, options with { ForceVerification = true });
             case "info":
                 return await InfoAsync(package, options);
             case "clear-cache":
