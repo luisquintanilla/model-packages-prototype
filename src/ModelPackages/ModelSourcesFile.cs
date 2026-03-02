@@ -20,6 +20,18 @@ public sealed class ModelSourcesFile
     /// <summary>Hosts from which model downloads are permitted. Empty/null means all hosts allowed.</summary>
     [JsonPropertyName("allowedHosts")]
     public List<string>? AllowedHosts { get; init; }
+
+    /// <summary>Cache configuration section.</summary>
+    [JsonPropertyName("cache")]
+    public CacheConfig? Cache { get; init; }
+}
+
+/// <summary>Cache configuration from model-sources.json.</summary>
+public sealed class CacheConfig
+{
+    /// <summary>Maximum cache size in bytes. Null means no limit.</summary>
+    [JsonPropertyName("maxSizeBytes")]
+    public long? MaxSizeBytes { get; init; }
 }
 
 /// <summary>A single source entry in model-sources.json.</summary>

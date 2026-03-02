@@ -42,6 +42,20 @@ static async Task<int> RunAsync(string[] args)
         }
     }
 
+    var options = new ModelOptions
+    {
+        Source = source,
+        CacheDirOverride = cacheDir,
+        Logger = msg => Console.Error.WriteLine(msg),
+    };
+
+    // Commands that don't require a manifest
+    if (command == "cache-info")
+    {
+        CacheInfo(options);
+        return 0;
+    }
+
     if (manifest is null)
     {
         Console.Error.WriteLine("Error: --manifest <path> is required.");
@@ -54,13 +68,6 @@ static async Task<int> RunAsync(string[] args)
         Console.Error.WriteLine($"Error: Manifest file not found: {manifest}");
         return 1;
     }
-
-    var options = new ModelOptions
-    {
-        Source = source,
-        CacheDirOverride = cacheDir,
-        Logger = msg => Console.Error.WriteLine(msg),
-    };
 
     try
     {
@@ -154,6 +161,42 @@ static void ClearCache(ModelPackage package, ModelOptions options)
     Console.WriteLine("Cache cleared.");
 }
 
+static void CacheInfo(ModelOptions options)
+{
+    var index = ModelPackage.GetCacheInfo(options);
+    var cacheDir = ModelPackage.GetCacheDirectory(options);
+    var maxSize = ModelPackage.GetMaxCacheSize();
+
+    Console.WriteLine($"Cache directory: {cacheDir}");
+    Console.WriteLine($"Total size:      {FormatSize(index.TotalSizeBytes)}");
+    Console.WriteLine($"Max size:        {(maxSize.HasValue ? FormatSize(maxSize.Value) + " (configured)" : "unlimited")}");
+    Console.WriteLine($"Entries:         {index.Entries.Count} file(s)");
+
+    if (index.Entries.Count > 0)
+    {
+        Console.WriteLine();
+        foreach (var entry in index.Entries.OrderByDescending(e => e.LastAccessedUtc))
+        {
+            var ago = DateTime.UtcNow - entry.LastAccessedUtc;
+            var agoStr = ago.TotalHours < 1 ? $"{ago.TotalMinutes:F0} min ago"
+                : ago.TotalDays < 1 ? $"{ago.TotalHours:F0} hours ago"
+                : $"{ago.TotalDays:F0} days ago";
+            Console.WriteLine($"  {entry.Path,-60} {FormatSize(entry.SizeBytes),10}  Last used: {agoStr}");
+        }
+    }
+}
+
+static string FormatSize(long bytes)
+{
+    if (bytes >= 1024L * 1024 * 1024)
+        return $"{bytes / 1024.0 / 1024 / 1024:F1} GB";
+    if (bytes >= 1024 * 1024)
+        return $"{bytes / 1024.0 / 1024:F1} MB";
+    if (bytes >= 1024)
+        return $"{bytes / 1024.0:F1} KB";
+    return $"{bytes} B";
+}
+
 static void PrintUsage()
 {
     Console.Error.WriteLine("""
@@ -164,6 +207,7 @@ static void PrintUsage()
           verify        Verify cached model integrity
           info          Show resolved source, cache path, manifest metadata
           clear-cache   Remove cached model
+          cache-info    Show cache usage and entries
 
         Options:
           --manifest <path>    Path to model-manifest.json (required)
