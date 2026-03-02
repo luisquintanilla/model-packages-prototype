@@ -12,11 +12,12 @@ internal static class ModelSourceConfig
 
     /// <summary>
     /// Load merged sources from project and user config files.
-    /// Returns (mergedSources dict, resolvedDefaultSource string or null).
+    /// Returns (mergedSources dict, resolvedDefaultSource string or null, allowedHosts set).
     /// </summary>
-    public static (Dictionary<string, ModelSource> Sources, string? DefaultSource) Load(string? projectDir = null)
+    public static (Dictionary<string, ModelSource> Sources, string? DefaultSource, HashSet<string> AllowedHosts) Load(string? projectDir = null)
     {
         var merged = new Dictionary<string, ModelSource>(StringComparer.OrdinalIgnoreCase);
+        var allowedHosts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         string? defaultSource = null;
 
         // 1. User-level: ~/.modelpackages/model-sources.json
@@ -34,6 +35,7 @@ internal static class ModelSourceConfig
             }
             foreach (var s in sources) merged[s.Key] = s.Value;
             if (ds != null) defaultSource = ds;
+            MergeAllowedHosts(allowedHosts, userFile);
         }
 
         // 2. Project-level: next to the .csproj (or current directory)
@@ -49,9 +51,26 @@ internal static class ModelSourceConfig
             }
             foreach (var s in sources) merged[s.Key] = s.Value;
             if (ds != null) defaultSource = ds;
+            MergeAllowedHosts(allowedHosts, projectFile);
         }
 
-        return (merged, defaultSource);
+        return (merged, defaultSource, allowedHosts);
+    }
+
+    /// <summary>Merges allowedHosts from a config file (additive union).</summary>
+    private static void MergeAllowedHosts(HashSet<string> target, string path)
+    {
+        var json = File.ReadAllText(path);
+        var file = JsonSerializer.Deserialize(json, JsonContext.Default.ModelSourcesFile);
+        if (file?.AllowedHosts is { Count: > 0 } hosts)
+        {
+            foreach (var host in hosts)
+            {
+                var trimmed = host?.Trim();
+                if (!string.IsNullOrWhiteSpace(trimmed))
+                    target.Add(trimmed);
+            }
+        }
     }
 
     private static (Dictionary<string, ModelSource>, string?, bool Clear) ParseFile(string path)

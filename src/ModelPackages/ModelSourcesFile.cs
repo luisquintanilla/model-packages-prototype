@@ -16,6 +16,10 @@ public sealed class ModelSourcesFile
     /// <summary>When true, discard all inherited sources before merging this file's sources.</summary>
     [JsonPropertyName("clear")]
     public bool Clear { get; init; }
+
+    /// <summary>Hosts from which model downloads are permitted. Empty/null means all hosts allowed.</summary>
+    [JsonPropertyName("allowedHosts")]
+    public List<string>? AllowedHosts { get; init; }
 }
 
 /// <summary>A single source entry in model-sources.json.</summary>
