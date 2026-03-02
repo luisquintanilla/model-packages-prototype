@@ -10,6 +10,7 @@ namespace ModelPackages;
 [JsonSerializable(typeof(ModelSourcesFile))]
 [JsonSerializable(typeof(ModelSourceEntry))]
 [JsonSerializable(typeof(List<ModelSourceEntry>))]
+[JsonSerializable(typeof(List<string>))]
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 internal partial class JsonContext : JsonSerializerContext
 {

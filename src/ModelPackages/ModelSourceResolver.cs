@@ -25,7 +25,7 @@ internal static class ModelSourceResolver
         log ??= _ => { };
 
         // Load external config (levels 3 & 4)
-        var (configSources, configDefault) = ModelSourceConfig.Load();
+        var (configSources, configDefault, allowedHosts) = ModelSourceConfig.Load();
 
         // Determine which source name to use (6-level precedence)
         string? sourceName = null;
@@ -38,7 +38,7 @@ internal static class ModelSourceResolver
             if (Uri.TryCreate(options.Source, UriKind.Absolute, out _) &&
                 (options.Source.StartsWith("http://") || options.Source.StartsWith("https://") || options.Source.StartsWith("file://")))
             {
-                // It's a direct URL — return immediately
+                ValidateHost(options.Source, allowedHosts);
                 log($"Source resolved: direct URL from ModelOptions.Source");
                 return (options.Source, "options-direct");
             }
@@ -94,6 +94,10 @@ internal static class ModelSourceResolver
                 $"Set MODELPACKAGES_SOURCE or add model-sources.json.");
 
         var url = BuildUrl(source, manifest, file);
+
+        // Enforce allowed-host policy
+        ValidateHost(url, allowedHosts);
+
         log($"Download URL: {url}");
         return (url, sourceName);
     }
@@ -149,5 +153,24 @@ internal static class ModelSourceResolver
         var path = file.Path;
 
         return $"{endpoint.TrimEnd('/')}/{modelId}/{path}";
+    }
+
+    /// <summary>Validates a URL against the allowed-host policy. file:// URLs always pass.</summary>
+    private static void ValidateHost(string url, HashSet<string> allowedHosts)
+    {
+        if (allowedHosts.Count == 0)
+            return; // No policy = all hosts allowed
+
+        if (url.StartsWith("file://", StringComparison.OrdinalIgnoreCase))
+            return; // Local files always allowed
+
+        if (Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
+            !allowedHosts.Contains(uri.Host))
+        {
+            throw new InvalidOperationException(
+                $"Host '{uri.Host}' is not in the allowed hosts list. " +
+                $"Allowed hosts: {string.Join(", ", allowedHosts)}. " +
+                $"Configure allowed hosts in model-sources.json or set MODELPACKAGES_SOURCE to use an approved source.");
+        }
     }
 }
