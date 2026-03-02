@@ -187,6 +187,8 @@ public sealed class ModelPackage
     {
         var cachePath = ModelCache.GetCachePath(_manifest, file, options);
         var forceVerification = options?.ForceVerification ?? false;
+        var progress = options?.Progress;
+        var fileName = Path.GetFileName(file.Path);
 
         // Fast path: cached file exists and verifies
         if (!options?.ForceRedownload == true)
@@ -210,11 +212,13 @@ public sealed class ModelPackage
                     catch (UnauthorizedAccessException) { }
                 }
                 log($"File already cached and verified at: {cachePath}");
+                progress?.Report(new DownloadProgress(file.Size ?? 0, file.Size, fileName, DownloadPhase.Completed));
                 return cachePath;
             }
         }
 
         // Resolve source URL
+        progress?.Report(new DownloadProgress(0, file.Size, fileName, DownloadPhase.Resolving));
         var (url, sourceName) = ModelSourceResolver.Resolve(_manifest, file, options, log);
 
         // Acquire lock and download
@@ -239,6 +243,7 @@ public sealed class ModelPackage
                         catch (UnauthorizedAccessException) { }
                     }
                     log($"File appeared in cache while waiting for lock: {cachePath}");
+                    progress?.Report(new DownloadProgress(file.Size ?? 0, file.Size, fileName, DownloadPhase.Completed));
                     return cachePath;
                 }
             }
@@ -247,6 +252,7 @@ public sealed class ModelPackage
             await ModelCache.AtomicWriteAsync(cachePath, async tempPath =>
             {
                 await ModelDownloader.DownloadAsync(url, tempPath, options, cancellationToken);
+                progress?.Report(new DownloadProgress(0, file.Size, fileName, DownloadPhase.Verifying));
                 await IntegrityVerifier.VerifyAsync(tempPath, file.Sha256, file.Size, cancellationToken, log);
             }, cancellationToken);
 
@@ -259,6 +265,7 @@ public sealed class ModelPackage
             }
         }
 
+        progress?.Report(new DownloadProgress(file.Size ?? 0, file.Size, fileName, DownloadPhase.Completed));
         log($"File cached at: {cachePath}");
         return cachePath;
     }

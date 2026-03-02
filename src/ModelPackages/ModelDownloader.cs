@@ -66,6 +66,9 @@ internal static class ModelDownloader
         Action<string> log,
         CancellationToken ct)
     {
+        var progress = options?.Progress;
+        var fileName = Path.GetFileName(destinationPath);
+
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
 
         // HuggingFace auth: bearer token from options or HF_TOKEN env
@@ -109,6 +112,7 @@ internal static class ModelDownloader
                 File.Delete(destinationPath);
             }
 
+            progress?.Report(new DownloadProgress(0, null, fileName, DownloadPhase.Failed));
             throw new HttpRequestException(message, null, response.StatusCode);
         }
 
@@ -137,23 +141,33 @@ internal static class ModelDownloader
         long totalRead = existingBytes;
         int bytesRead;
         var lastReport = DateTimeOffset.UtcNow;
+        var minReportInterval = TimeSpan.FromMilliseconds(100);
+
+        progress?.Report(new DownloadProgress(0, totalBytes, fileName, DownloadPhase.Downloading));
 
         while ((bytesRead = await contentStream.ReadAsync(buffer, ct)) > 0)
         {
             await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead), ct);
             totalRead += bytesRead;
 
-            // Report progress every 5 seconds
-            if (DateTimeOffset.UtcNow - lastReport > TimeSpan.FromSeconds(5))
+            var now = DateTimeOffset.UtcNow;
+            if (now - lastReport > minReportInterval)
+            {
+                progress?.Report(new DownloadProgress(totalRead, totalBytes, fileName, DownloadPhase.Downloading));
+                lastReport = now;
+            }
+
+            // Log text progress every 5 seconds
+            if (now - lastReport > TimeSpan.FromSeconds(5))
             {
                 if (totalExpected.HasValue)
                     log($"Progress: {totalRead / 1024 / 1024} MB / {totalExpected.Value / 1024 / 1024} MB ({100.0 * totalRead / totalExpected.Value:F1}%)");
                 else
                     log($"Progress: {totalRead / 1024 / 1024} MB downloaded");
-                lastReport = DateTimeOffset.UtcNow;
             }
         }
 
+        progress?.Report(new DownloadProgress(totalRead, totalBytes, fileName, DownloadPhase.Completed));
         log($"Download complete: {totalRead / 1024 / 1024} MB");
     }
 

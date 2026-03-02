@@ -20,4 +20,7 @@ public sealed record ModelOptions
 
     /// <summary>Logger callback for progress and status messages.</summary>
     public Action<string>? Logger { get; init; }
+
+    /// <summary>Structured progress reporter for download lifecycle events.</summary>
+    public IProgress<DownloadProgress>? Progress { get; init; }
 }
