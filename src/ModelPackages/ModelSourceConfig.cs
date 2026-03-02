@@ -27,7 +27,11 @@ internal static class ModelSourceConfig
         if (File.Exists(userFile))
         {
             var (sources, ds, clear) = ParseFile(userFile);
-            if (clear) merged.Clear();
+            if (clear)
+            {
+                merged.Clear();
+                defaultSource = null;
+            }
             foreach (var s in sources) merged[s.Key] = s.Value;
             if (ds != null) defaultSource = ds;
         }
