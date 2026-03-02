@@ -14,4 +14,8 @@
     <None Include="PACKAGE.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="ModelPackages.Tests" />
+  </ItemGroup>
+
 </Project>

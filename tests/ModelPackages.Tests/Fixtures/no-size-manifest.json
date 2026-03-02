@@ -1,0 +1,19 @@
+{
+  "model": {
+    "id": "test/no-size-model",
+    "revision": "main",
+    "files": [
+      {
+        "path": "model.onnx",
+        "sha256": "",
+        "size": 0
+      }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface"
+    }
+  },
+  "defaultSource": "huggingface"
+}

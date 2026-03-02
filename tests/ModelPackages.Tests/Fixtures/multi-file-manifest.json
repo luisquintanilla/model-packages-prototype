@@ -1,0 +1,29 @@
+{
+  "model": {
+    "id": "org/sharded-model",
+    "revision": "v1.0",
+    "files": [
+      {
+        "path": "model-00001-of-00003.onnx",
+        "sha256": "aaaa",
+        "size": 500000000
+      },
+      {
+        "path": "model-00002-of-00003.onnx",
+        "sha256": "bbbb",
+        "size": 500000000
+      },
+      {
+        "path": "tokenizer.json",
+        "sha256": "cccc",
+        "size": 712000
+      }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface"
+    }
+  },
+  "defaultSource": "huggingface"
+}

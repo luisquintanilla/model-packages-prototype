@@ -48,6 +48,9 @@ jobs:
       - name: Build
         run: dotnet build -c Release --no-restore
 
+      - name: Test
+        run: dotnet test -c Release --no-build --logger "console;verbosity=normal"
+
       # Determine version: tag-based for releases, preview for main
       - name: Set version
         id: version
