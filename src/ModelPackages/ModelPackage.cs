@@ -190,9 +190,13 @@ public sealed class ModelPackage
             // Full SHA256 validation
             if (await IntegrityVerifier.IsValidAsync(cachePath, file.Sha256, file.Size, cancellationToken))
             {
-                // Write/refresh sidecar for next time
+                // Write/refresh sidecar for next time (best-effort — don't fail if write fails)
                 if (!string.IsNullOrEmpty(file.Sha256))
-                    IntegrityVerifier.WriteSidecar(cachePath, file.Sha256);
+                {
+                    try { IntegrityVerifier.WriteSidecar(cachePath, file.Sha256); }
+                    catch (IOException) { }
+                    catch (UnauthorizedAccessException) { }
+                }
                 log($"File already cached and verified at: {cachePath}");
                 return cachePath;
             }
@@ -217,7 +221,11 @@ public sealed class ModelPackage
                 if (await IntegrityVerifier.IsValidAsync(cachePath, file.Sha256, file.Size, cancellationToken))
                 {
                     if (!string.IsNullOrEmpty(file.Sha256))
-                        IntegrityVerifier.WriteSidecar(cachePath, file.Sha256);
+                    {
+                        try { IntegrityVerifier.WriteSidecar(cachePath, file.Sha256); }
+                        catch (IOException) { }
+                        catch (UnauthorizedAccessException) { }
+                    }
                     log($"File appeared in cache while waiting for lock: {cachePath}");
                     return cachePath;
                 }
@@ -230,9 +238,13 @@ public sealed class ModelPackage
                 await IntegrityVerifier.VerifyAsync(tempPath, file.Sha256, file.Size, cancellationToken, log);
             }, cancellationToken);
 
-            // Write sidecar after successful download and verification
+            // Write sidecar after successful download and verification (best-effort)
             if (!string.IsNullOrEmpty(file.Sha256))
-                IntegrityVerifier.WriteSidecar(cachePath, file.Sha256);
+            {
+                try { IntegrityVerifier.WriteSidecar(cachePath, file.Sha256); }
+                catch (IOException) { }
+                catch (UnauthorizedAccessException) { }
+            }
         }
 
         log($"File cached at: {cachePath}");

@@ -131,10 +131,10 @@ internal static class IntegrityVerifier
                 if (line.StartsWith("sha256=", StringComparison.Ordinal))
                     storedHash = line["sha256=".Length..];
                 else if (line.StartsWith("size=", StringComparison.Ordinal) &&
-                         long.TryParse(line["size=".Length..], out var sz))
+                         long.TryParse(line["size=".Length..], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var sz))
                     storedSize = sz;
                 else if (line.StartsWith("mtime=", StringComparison.Ordinal) &&
-                         DateTime.TryParse(line["mtime=".Length..], null,
+                         DateTime.TryParse(line["mtime=".Length..], System.Globalization.CultureInfo.InvariantCulture,
                              System.Globalization.DateTimeStyles.RoundtripKind, out var mt))
                     storedMtime = mt;
             }
