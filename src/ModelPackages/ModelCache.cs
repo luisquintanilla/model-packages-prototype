@@ -77,6 +77,38 @@ internal static class ModelCache
     }
 
     /// <summary>
+    /// Finds an existing partial download file for the given final path.
+    /// Returns the partial file path if found, null otherwise.
+    /// </summary>
+    public static string? FindPartialFile(string finalPath)
+    {
+        var dir = Path.GetDirectoryName(finalPath);
+        if (dir is null || !Directory.Exists(dir))
+            return null;
+
+        var baseName = Path.GetFileName(finalPath);
+        var partials = Directory.GetFiles(dir, baseName + ".partial.*");
+        // Return the largest partial file (most progress)
+        return partials
+            .OrderByDescending(p => new FileInfo(p).Length)
+            .FirstOrDefault();
+    }
+
+    /// <summary>Removes all partial files for the given final path.</summary>
+    public static void CleanPartialFiles(string finalPath)
+    {
+        var dir = Path.GetDirectoryName(finalPath);
+        if (dir is null || !Directory.Exists(dir))
+            return;
+
+        var baseName = Path.GetFileName(finalPath);
+        foreach (var partial in Directory.GetFiles(dir, baseName + ".partial.*"))
+        {
+            try { File.Delete(partial); } catch { }
+        }
+    }
+
+    /// <summary>
     /// Acquires an exclusive lock file for the given cache path.
     /// Returns an IDisposable that releases the lock when disposed.
     /// Uses exponential backoff up to the timeout.
