@@ -200,17 +200,17 @@ static string FormatSize(long bytes)
 static void PrintUsage()
 {
     Console.Error.WriteLine("""
-        Usage: model-packages <command> --manifest <path> [options]
+        Usage: model-packages <command> [--manifest <path>] [options]
 
         Commands:
           prefetch      Download and verify the model
           verify        Verify cached model integrity
           info          Show resolved source, cache path, manifest metadata
           clear-cache   Remove cached model
-          cache-info    Show cache usage and entries
+          cache-info    Show cache usage and entries (no --manifest required)
 
         Options:
-          --manifest <path>    Path to model-manifest.json (required)
+          --manifest <path>    Path to model-manifest.json (required for most commands)
           --source <name|url>  Override model source
           --cache-dir <path>   Override cache directory
 

@@ -125,6 +125,7 @@ public sealed class ModelPackage
         var cacheDir = ModelCache.ResolveCacheDir(options);
         var index = CacheIndex.Load(cacheDir);
         index.Reconcile(cacheDir);
+        index.Save(cacheDir);
         return index;
     }
 

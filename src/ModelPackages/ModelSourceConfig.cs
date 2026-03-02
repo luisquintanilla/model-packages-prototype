@@ -147,15 +147,15 @@ internal static class ModelSourceConfig
     internal static long? ParseSizeString(string value)
     {
         value = value.Trim();
-        if (long.TryParse(value, out var raw))
+        if (long.TryParse(value, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var raw))
             return raw;
 
         if (value.EndsWith("GB", StringComparison.OrdinalIgnoreCase) &&
-            double.TryParse(value[..^2], out var gb))
+            double.TryParse(value[..^2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var gb))
             return (long)(gb * 1024 * 1024 * 1024);
 
         if (value.EndsWith("MB", StringComparison.OrdinalIgnoreCase) &&
-            double.TryParse(value[..^2], out var mb))
+            double.TryParse(value[..^2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var mb))
             return (long)(mb * 1024 * 1024);
 
         return null;
