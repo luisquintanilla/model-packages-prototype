@@ -141,6 +141,7 @@ internal static class ModelDownloader
         long totalRead = existingBytes;
         int bytesRead;
         var lastReport = DateTimeOffset.UtcNow;
+        var lastLogReport = DateTimeOffset.UtcNow;
         var minReportInterval = TimeSpan.FromMilliseconds(100);
 
         progress?.Report(new DownloadProgress(0, totalBytes, fileName, DownloadPhase.Downloading));
@@ -157,17 +158,18 @@ internal static class ModelDownloader
                 lastReport = now;
             }
 
-            // Log text progress every 5 seconds
-            if (now - lastReport > TimeSpan.FromSeconds(5))
+            // Log text progress every 5 seconds (separate timestamp from IProgress throttling)
+            if (now - lastLogReport > TimeSpan.FromSeconds(5))
             {
                 if (totalExpected.HasValue)
                     log($"Progress: {totalRead / 1024 / 1024} MB / {totalExpected.Value / 1024 / 1024} MB ({100.0 * totalRead / totalExpected.Value:F1}%)");
                 else
                     log($"Progress: {totalRead / 1024 / 1024} MB downloaded");
+                lastLogReport = now;
             }
         }
 
-        progress?.Report(new DownloadProgress(totalRead, totalBytes, fileName, DownloadPhase.Completed));
+        // Don't report Completed here — let ModelPackage report it after verification succeeds
         log($"Download complete: {totalRead / 1024 / 1024} MB");
     }
 
