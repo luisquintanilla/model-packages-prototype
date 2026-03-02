@@ -65,7 +65,11 @@ internal static class ModelSourceConfig
         if (file?.AllowedHosts is { Count: > 0 } hosts)
         {
             foreach (var host in hosts)
-                target.Add(host);
+            {
+                var trimmed = host?.Trim();
+                if (!string.IsNullOrWhiteSpace(trimmed))
+                    target.Add(trimmed);
+            }
         }
     }
 
