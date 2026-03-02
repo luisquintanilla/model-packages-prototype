@@ -117,6 +117,26 @@ public sealed class ModelPackage
         }
     }
 
+    /// <summary>
+    /// Returns cache usage information: total size, entry count, and per-entry details.
+    /// </summary>
+    public static CacheIndex GetCacheInfo(ModelOptions? options = null)
+    {
+        var cacheDir = ModelCache.ResolveCacheDir(options);
+        var index = CacheIndex.Load(cacheDir);
+        index.Reconcile(cacheDir);
+        index.Save(cacheDir);
+        return index;
+    }
+
+    /// <summary>Returns the resolved cache directory path.</summary>
+    public static string GetCacheDirectory(ModelOptions? options = null)
+        => ModelCache.ResolveCacheDir(options);
+
+    /// <summary>Returns the configured maximum cache size, or null if unlimited.</summary>
+    public static long? GetMaxCacheSize()
+        => ModelSourceConfig.GetMaxCacheSize();
+
     // ── Static utilities ────────────────────────────────────────────
 
     private static readonly string[] DefaultResourcePatterns =
@@ -213,6 +233,7 @@ public sealed class ModelPackage
                 }
                 log($"File already cached and verified at: {cachePath}");
                 progress?.Report(new DownloadProgress(file.Size ?? 0, file.Size, fileName, DownloadPhase.Completed));
+                UpdateCacheIndex(cachePath, file, options, log);
                 return cachePath;
             }
         }
@@ -231,6 +252,7 @@ public sealed class ModelPackage
                     IntegrityVerifier.QuickValidate(cachePath, file.Sha256, file.Size))
                 {
                     log($"File appeared in cache while waiting for lock: {cachePath}");
+                    UpdateCacheIndex(cachePath, file, options, log);
                     return cachePath;
                 }
 
@@ -267,6 +289,29 @@ public sealed class ModelPackage
 
         progress?.Report(new DownloadProgress(file.Size ?? 0, file.Size, fileName, DownloadPhase.Completed));
         log($"File cached at: {cachePath}");
+        UpdateCacheIndex(cachePath, file, options, log);
         return cachePath;
+    }
+
+    /// <summary>Updates the cache index with access time and triggers eviction if needed.</summary>
+    private void UpdateCacheIndex(string cachePath, ModelManifest.ModelFileInfo file, ModelOptions? options, Action<string> log)
+    {
+        try
+        {
+            var cacheDir = ModelCache.ResolveCacheDir(options);
+            var relativePath = Path.GetRelativePath(cacheDir, cachePath).Replace(Path.DirectorySeparatorChar, '/');
+            var sizeBytes = File.Exists(cachePath) ? new FileInfo(cachePath).Length : (file.Size ?? 0);
+
+            var index = CacheIndex.Load(cacheDir);
+            index.Touch(relativePath, sizeBytes);
+
+            var maxSize = ModelSourceConfig.GetMaxCacheSize();
+            index.EvictIfNeeded(cacheDir, maxSize, log);
+            index.Save(cacheDir);
+        }
+        catch
+        {
+            // Cache index is best-effort; don't fail the download
+        }
     }
 }

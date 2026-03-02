@@ -103,4 +103,61 @@ internal static class ModelSourceConfig
 
         return (dict, file.DefaultSource, file.Clear);
     }
+
+    /// <summary>Resolves the maximum cache size from config files or environment variable.</summary>
+    public static long? GetMaxCacheSize(string? projectDir = null)
+    {
+        // 1. Environment variable (e.g., "10GB", "500MB", or raw bytes)
+        var envVal = Environment.GetEnvironmentVariable("MODELPACKAGES_CACHE_MAX_SIZE");
+        if (!string.IsNullOrEmpty(envVal))
+        {
+            var parsed = ParseSizeString(envVal);
+            if (parsed.HasValue)
+                return parsed;
+        }
+
+        // 2. Config files (project overrides user)
+        long? maxSize = null;
+
+        var userDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            ".modelpackages");
+        var userFile = Path.Combine(userDir, FileName);
+        if (File.Exists(userFile))
+        {
+            var json = File.ReadAllText(userFile);
+            var file = JsonSerializer.Deserialize(json, JsonContext.Default.ModelSourcesFile);
+            if (file?.Cache?.MaxSizeBytes.HasValue == true)
+                maxSize = file.Cache.MaxSizeBytes;
+        }
+
+        var dir = projectDir ?? Directory.GetCurrentDirectory();
+        var projectFile = Path.Combine(dir, FileName);
+        if (File.Exists(projectFile))
+        {
+            var json = File.ReadAllText(projectFile);
+            var file = JsonSerializer.Deserialize(json, JsonContext.Default.ModelSourcesFile);
+            if (file?.Cache?.MaxSizeBytes.HasValue == true)
+                maxSize = file.Cache.MaxSizeBytes;
+        }
+
+        return maxSize;
+    }
+
+    internal static long? ParseSizeString(string value)
+    {
+        value = value.Trim();
+        if (long.TryParse(value, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var raw))
+            return raw;
+
+        if (value.EndsWith("GB", StringComparison.OrdinalIgnoreCase) &&
+            double.TryParse(value[..^2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var gb))
+            return (long)(gb * 1024 * 1024 * 1024);
+
+        if (value.EndsWith("MB", StringComparison.OrdinalIgnoreCase) &&
+            double.TryParse(value[..^2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var mb))
+            return (long)(mb * 1024 * 1024);
+
+        return null;
+    }
 }
