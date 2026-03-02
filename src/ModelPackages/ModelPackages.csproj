@@ -5,6 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>true</IsPackable>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <IsAotCompatible>true</IsAotCompatible>
     <PackageId>ModelPackages</PackageId>
     <Description>Core SDK for building model packages — fetch, cache, and verify AI model artifacts from configurable sources.</Description>
     <PackageReadmeFile>PACKAGE.md</PackageReadmeFile>

@@ -6,6 +6,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ModelPackages.Tests/ModelPackages.Tests.csproj" />
+    <Project Path="tests/AotTest/AotTest.csproj" />
   </Folder>
   <Folder Name="/samples/onnx/">
     <Project Path="samples/SampleModelPackage.Onnx/SampleModelPackage.Onnx.csproj" />
