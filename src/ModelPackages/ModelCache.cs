@@ -36,7 +36,7 @@ internal static class ModelCache
         }
     }
 
-    private static string ResolveCacheDir(ModelOptions? options)
+    internal static string ResolveCacheDir(ModelOptions? options)
     {
         // 1. ModelOptions.CacheDirOverride
         if (!string.IsNullOrEmpty(options?.CacheDirOverride))
