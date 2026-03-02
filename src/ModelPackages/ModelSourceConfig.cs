@@ -26,7 +26,12 @@ internal static class ModelSourceConfig
         var userFile = Path.Combine(userDir, FileName);
         if (File.Exists(userFile))
         {
-            var (sources, ds) = ParseFile(userFile);
+            var (sources, ds, clear) = ParseFile(userFile);
+            if (clear)
+            {
+                merged.Clear();
+                defaultSource = null;
+            }
             foreach (var s in sources) merged[s.Key] = s.Value;
             if (ds != null) defaultSource = ds;
         }
@@ -36,7 +41,12 @@ internal static class ModelSourceConfig
         var projectFile = Path.Combine(dir, FileName);
         if (File.Exists(projectFile))
         {
-            var (sources, ds) = ParseFile(projectFile);
+            var (sources, ds, clear) = ParseFile(projectFile);
+            if (clear)
+            {
+                merged.Clear();
+                defaultSource = null;
+            }
             foreach (var s in sources) merged[s.Key] = s.Value;
             if (ds != null) defaultSource = ds;
         }
@@ -44,7 +54,7 @@ internal static class ModelSourceConfig
         return (merged, defaultSource);
     }
 
-    private static (Dictionary<string, ModelSource>, string?) ParseFile(string path)
+    private static (Dictionary<string, ModelSource>, string?, bool Clear) ParseFile(string path)
     {
         var json = File.ReadAllText(path);
         var file = JsonSerializer.Deserialize(json, JsonContext.Default.ModelSourcesFile)
@@ -72,6 +82,6 @@ internal static class ModelSourceConfig
             };
         }
 
-        return (dict, file.DefaultSource);
+        return (dict, file.DefaultSource, file.Clear);
     }
 }
