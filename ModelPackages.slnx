@@ -3,6 +3,9 @@
     <Project Path="src/ModelPackages/ModelPackages.csproj" />
     <Project Path="src/ModelPackages.Tool/ModelPackages.Tool.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ModelPackages.Tests/ModelPackages.Tests.csproj" />
+  </Folder>
   <Folder Name="/samples/onnx/">
     <Project Path="samples/SampleModelPackage.Onnx/SampleModelPackage.Onnx.csproj" />
     <Project Path="samples/SampleConsumer.Onnx/SampleConsumer.Onnx.csproj" />
