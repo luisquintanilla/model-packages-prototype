@@ -124,12 +124,24 @@ public sealed class ModelPackage
 
     /// <summary>
     /// Extracts embedded resources matching the given file patterns from an assembly
-    /// to a model-specific cache directory.
+    /// to a model-specific cache directory, using the default cache location.
     /// Returns the directory path containing the extracted files.
     /// </summary>
     public static string ExtractResources(
         Assembly assembly,
         string modelName,
+        string[]? filePatterns = null)
+        => ExtractResources(assembly, modelName, options: null, filePatterns);
+
+    /// <summary>
+    /// Extracts embedded resources matching the given file patterns from an assembly
+    /// to a model-specific cache directory, respecting cache directory overrides in <paramref name="options"/>.
+    /// Returns the directory path containing the extracted files.
+    /// </summary>
+    public static string ExtractResources(
+        Assembly assembly,
+        string modelName,
+        ModelOptions? options,
         string[]? filePatterns = null)
     {
         ArgumentNullException.ThrowIfNull(modelName);
@@ -138,8 +150,8 @@ public sealed class ModelPackage
 
         filePatterns ??= DefaultResourcePatterns;
 
-        var cacheDir = Path.Combine(
-            ModelCache.GetDefaultCacheDir(), "resource-cache", modelName);
+        var baseCacheDir = ModelCache.ResolveCacheDir(options);
+        var cacheDir = Path.Combine(baseCacheDir, "resource-cache", modelName);
         Directory.CreateDirectory(cacheDir);
 
         foreach (var resourceName in assembly.GetManifestResourceNames())
