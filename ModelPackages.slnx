@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/ModelPackages/ModelPackages.csproj" />
     <Project Path="src/ModelPackages.Tool/ModelPackages.Tool.csproj" />
+    <Project Path="src/ModelPackages.Generators/ModelPackages.Generators.csproj" />
   </Folder>
   <Folder Name="/samples/onnx/">
     <Project Path="samples/SampleModelPackage.Onnx/SampleModelPackage.Onnx.csproj" />
