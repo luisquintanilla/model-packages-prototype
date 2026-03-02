@@ -12,6 +12,10 @@ public sealed class ModelSourcesFile
     /// <summary>Key of the default source.</summary>
     [JsonPropertyName("defaultSource")]
     public string? DefaultSource { get; init; }
+
+    /// <summary>When true, discard all inherited sources before merging this file's sources.</summary>
+    [JsonPropertyName("clear")]
+    public bool Clear { get; init; }
 }
 
 /// <summary>A single source entry in model-sources.json.</summary>
