@@ -6,6 +6,7 @@ This guide walks through creating a model package — a small NuGet package that
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - A model you want to package (ONNX format for this guide)
+- For audio models, additionally: `MLNet.AudioInference.Onnx` and `MLNet.Audio.Core`
 - The model's SHA256 hash and file size
 
 ## Concepts
@@ -29,6 +30,8 @@ dotnet new classlib -n MyModelPackage -f net10.0
 cd MyModelPackage
 dotnet add reference path/to/ModelPackages.csproj
 dotnet add package MLNet.TextInference.Onnx --version 0.1.0-preview.1
+# Or for audio models:
+dotnet add package MLNet.AudioInference.Onnx --version 0.1.0-preview.2
 ```
 
 ### 2. Create the manifest
@@ -410,3 +413,37 @@ Two tracks:
 - **Provider-agnostic MEAI**: Use any `IChatClient` provider (OpenAI, Azure, Ollama) — no model package needed.
 
 See: `SampleModelPackage.TextGeneration`, `SampleConsumer.TextGenerationMeai`
+
+### Audio Classification
+
+Expose a `CreateClassifierAsync()` method that returns an `OnnxAudioClassificationTransformer`. The label list (e.g., 527 AudioSet labels) is defined in code. Consumers call `Classify()` on the transformer to get `AudioClassificationResult[]`. Audio is loaded via `AudioIO.LoadWav()` which returns `AudioData`.
+
+See: `SampleModelPackage.AstAudioSet`
+
+### Audio Embedding
+
+Return `IEmbeddingGenerator<AudioData, Embedding<float>>` from `CreateEmbeddingGeneratorAsync()`. The facade configures the `MelSpectrogramExtractor` with model-specific mel bins (e.g., 64 for CLAP, 128 for AST). The library auto-pads spectrograms to the model's expected frame count.
+
+See: `SampleModelPackage.ClapEmbedding`
+
+### Voice Activity Detection
+
+Expose a `CreateVadAsync()` method that returns an `IVoiceActivityDetector`. Consumers call `DetectSpeech(audio)` to get `SpeechSegment[]` with start/end timestamps. VAD options include `Threshold`, `MinSpeechDuration`, `MinSilenceDuration` (as `TimeSpan`), `WindowSize`, and `SampleRate`.
+
+See: `SampleModelPackage.SileroVad`
+
+### Speech-to-Text
+
+Two approaches:
+- **Raw ONNX files**: Use `OnnxWhisperEstimator` with separate `EncoderModelPath` + `DecoderModelPath` for individual ONNX files from HuggingFace.
+- **ORT GenAI directory**: Use `OnnxSpeechToTextTransformer` with a single `ModelPath` pointing to a GenAI-format directory.
+
+The sample packages use the raw ONNX approach since onnx-community provides individual encoder/decoder files.
+
+See: `SampleModelPackage.WhisperTiny`, `SampleModelPackage.WhisperBase`
+
+### Text-to-Speech
+
+Expose a `CreateTtsClientAsync()` method that returns an `ITextToSpeechClient` (from MEAI abstractions). For direct access, `CreateTtsAsync()` returns the transformer directly. SpeechT5 requires 5 files: encoder, decoder, vocoder, tokenizer model, and speaker embeddings — all listed in the manifest and downloaded via `EnsureFilesAsync()`.
+
+See: `SampleModelPackage.SpeechT5Tts`

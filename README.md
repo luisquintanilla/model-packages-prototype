@@ -40,6 +40,13 @@ dotnet run --project samples/SampleConsumer.NER
 dotnet run --project samples/SampleConsumer.QA
 dotnet run --project samples/SampleConsumer.Reranking
 dotnet run --project samples/SampleConsumer.TextGeneration
+
+# Audio samples (require a test.wav file in the consumer directory)
+dotnet run --project samples/SampleConsumer.WhisperTiny
+dotnet run --project samples/SampleConsumer.SileroVad
+dotnet run --project samples/SampleConsumer.AstAudioSet
+dotnet run --project samples/SampleConsumer.ClapEmbedding
+dotnet run --project samples/SampleConsumer.SpeechT5Tts
 ```
 
 ### Locally
@@ -72,6 +79,12 @@ The prototype includes sample model packages and consumers for every major ML/AI
 | **Reranking** | `SampleModelPackage.Reranking` | `SampleConsumer.Reranking` | MS MARCO MiniLM |
 | **Text Generation (local)** | `SampleModelPackage.TextGeneration` | `SampleConsumer.TextGeneration` | Phi-3-mini |
 | **Text Generation (MEAI)** | — | `SampleConsumer.TextGenerationMeai` | Any IChatClient provider |
+| **Audio Embedding (CLAP)** | `SampleModelPackage.ClapEmbedding` | `SampleConsumer.ClapEmbedding` | CLAP HTSAT-unfused |
+| **Audio Classification** | `SampleModelPackage.AstAudioSet` | `SampleConsumer.AstAudioSet` | AST AudioSet |
+| **Voice Activity Detection** | `SampleModelPackage.SileroVad` | `SampleConsumer.SileroVad` | Silero VAD v4 |
+| **Speech-to-Text (Tiny)** | `SampleModelPackage.WhisperTiny` | `SampleConsumer.WhisperTiny` | Whisper Tiny |
+| **Speech-to-Text (Base)** | `SampleModelPackage.WhisperBase` | `SampleConsumer.WhisperBase` | Whisper Base |
+| **Text-to-Speech** | `SampleModelPackage.SpeechT5Tts` | `SampleConsumer.SpeechT5Tts` | SpeechT5 TTS |
 
 Each model package embeds a manifest and small assets (vocabs, label maps) while large model binaries are fetched on demand through the Core SDK.
 
@@ -111,7 +124,20 @@ model-packages-prototype/
 │   │  ── Text Generation ─────────────────────────────────────────────
 │   ├── SampleModelPackage.TextGeneration/   ← Phi-3-mini local ONNX GenAI
 │   ├── SampleConsumer.TextGeneration/       ← Consumer: local text generation
-│   └── SampleConsumer.TextGenerationMeai/   ← Consumer: provider-agnostic IChatClient
+│   ├── SampleConsumer.TextGenerationMeai/   ← Consumer: provider-agnostic IChatClient
+│   │  ── Audio ────────────────────────────────────────────────────
+│   ├── SampleModelPackage.ClapEmbedding/    ← CLAP audio embedding (ONNX)
+│   ├── SampleConsumer.ClapEmbedding/        ← Consumer: cosine similarity demo
+│   ├── SampleModelPackage.AstAudioSet/      ← AST AudioSet classification (527 labels)
+│   ├── SampleConsumer.AstAudioSet/          ← Consumer: classify audio events
+│   ├── SampleModelPackage.SileroVad/        ← Silero VAD v4 voice activity detection
+│   ├── SampleConsumer.SileroVad/            ← Consumer: detect speech segments
+│   ├── SampleModelPackage.WhisperTiny/      ← Whisper Tiny speech-to-text (ONNX)
+│   ├── SampleConsumer.WhisperTiny/          ← Consumer: transcribe audio
+│   ├── SampleModelPackage.WhisperBase/      ← Whisper Base speech-to-text (ONNX)
+│   ├── SampleConsumer.WhisperBase/          ← Consumer: transcribe audio
+│   ├── SampleModelPackage.SpeechT5Tts/     ← SpeechT5 text-to-speech (5 ONNX files)
+│   └── SampleConsumer.SpeechT5Tts/         ← Consumer: synthesize speech
 │
 ├── tools/
 │   └── PrepareMLNetModel/                   ← Helper to build .mlnet from raw ONNX + vocab
@@ -135,10 +161,12 @@ model-packages-prototype/
 │  Exposes: MiniLMModel.CreateEmbeddingGeneratorAsync()   │
 ├─────────────────────────────────────────────────────────┤
 │  Layer 2: Inference Library (NuGet packages)            │
-│  MLNet.TextInference.Onnx — embeddings, classification, │
-│    NER, QA, reranking via ML.NET + ONNX Runtime          │
-│  MLNet.TextGeneration.OnnxGenAI — local text generation  │
-│  IEmbeddingGenerator, IChatClient (MEAI abstractions)    │
+│  MLNet.TextInference.Onnx — embeddings, classification,  │
+│    NER, QA, reranking via ML.NET + ONNX Runtime           │
+│  MLNet.AudioInference.Onnx — audio classification,        │
+│    embedding, VAD, TTS, speech-to-text                     │
+│  MLNet.TextGeneration.OnnxGenAI — local text generation   │
+│  IEmbeddingGenerator, IChatClient (MEAI abstractions)     │
 ├─────────────────────────────────────────────────────────┤
 │  Layer 1: Core SDK (ModelPackages)                      │
 │  Resolve source → Check cache → Download → SHA256 verify│
@@ -245,6 +273,9 @@ dotnet add package ModelPackages
 - **Microsoft.Extensions.AI** — `IEmbeddingGenerator<string, Embedding<float>>` and `IChatClient` abstractions
 - **OnnxRuntime** — Model inference (embeddings, classification, NER, QA, reranking)
 - **ONNX Runtime GenAI** — Local text generation (Phi-3-mini)
+- **MLNet.AudioInference.Onnx** — Audio inference: classification, embedding, VAD, TTS, speech-to-text
+- **MLNet.Audio.Core** — Audio primitives: AudioData, AudioIO, MelSpectrogramExtractor
+- **MLNet.Audio.Tokenizers** — Audio tokenizers: SpeechT5 char tokenizer, Whisper tokenizer
 - **System.Text.Json** — Source-generated serialization for manifests
 
 ## Status

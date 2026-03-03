@@ -10,23 +10,29 @@ Large model downloads (86 MB+) that fail mid-transfer currently restart from zer
 
 **Tracking issue:** [#1](https://github.com/luisquintanilla/model-packages-prototype/issues/1)
 
-### Sidecar Hash File Caching
+### ~~Sidecar Hash File Caching~~ ✅
 
 Every `EnsureModelAsync` call on a cached model re-computes SHA256 (~2.7s for 86 MB). Write a `.sha256` sidecar file after first verification; on subsequent loads, validate against file size + modification time + sidecar hash to reduce cached access to ~10ms.
 
 **Tracking issue:** [#2](https://github.com/luisquintanilla/model-packages-prototype/issues/2)
 
-### Multi-File Model Support
+**Status:** Implemented. Cache hits now use sidecar `.sha256` files for fast validation (~10ms vs ~2.7s).
+
+### ~~Multi-File Model Support~~ ✅
 
 The manifest `files[]` array already supports listing multiple files, but the orchestrator only processes the first. Real models are often sharded (`model-00001-of-00003.onnx`) or have companion files (`tokenizer.json`, `config.json`). Extend `EnsureModelAsync` to download, cache, and verify all files, returning a directory path or a dictionary of paths.
 
 **Tracking issue:** [#3](https://github.com/luisquintanilla/model-packages-prototype/issues/3)
 
-### Unit Test Suite
+**Status:** Implemented. `EnsureFilesAsync()` returns `ModelFiles` with `PrimaryModelPath` and `GetPath()`. Used by SpeechT5 (5 files), Whisper (2 files), and others.
+
+### ~~Unit Test Suite~~ ✅
 
 Add a comprehensive test suite covering source resolution, cache behavior, atomic writes, integrity verification, and manifest parsing. Use a mock HTTP server for download tests.
 
 **Tracking issue:** [#4](https://github.com/luisquintanilla/model-packages-prototype/issues/4)
+
+**Status:** Implemented. 47 xUnit tests covering cache, downloader, manifest, integrity verifier, source resolution, and more.
 
 ### `IProgress<T>` Download Reporting
 
@@ -36,17 +42,21 @@ Replace the `Action<string>` logging callback with a proper `IProgress<DownloadP
 
 ## Phase 2: Enterprise & Security
 
-### Enterprise Allowed-Host Policy
+### ~~Enterprise Allowed-Host Policy~~ ✅
 
 Add a policy mechanism (similar to NuGet's `packageSourceMapping`) that restricts which hosts model files may be downloaded from. An enterprise config could say "only allow downloads from `models.internal.company.com`."
 
 **Tracking issue:** [#6](https://github.com/luisquintanilla/model-packages-prototype/issues/6)
 
-### `<clear />` Equivalent in model-sources.json
+**Status:** Implemented. `AllowedHosts` in `model-sources.json` restricts download hosts. Case-insensitive, merged additively across config levels.
+
+### ~~`<clear />` Equivalent in model-sources.json~~ ✅
 
 In `nuget.config`, `<clear />` removes all inherited sources. Add the same concept to `model-sources.json` so a project-level config can say "ignore all user-level and system-level sources, only use what I define here."
 
 **Tracking issue:** [#7](https://github.com/luisquintanilla/model-packages-prototype/issues/7)
+
+**Status:** Implemented. `"clear": true` in project-level config resets both merged sources and defaultSource.
 
 ## Phase 2: Developer Experience
 

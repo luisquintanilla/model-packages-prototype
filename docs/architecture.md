@@ -64,11 +64,11 @@ EnsureModelAsync(options)
     └─ return final path
 ```
 
-### Layer 2: Inference Library (`MLNet.Embeddings.Onnx`)
+### Layer 2: Inference Libraries
 
-**What it does:** Builds an ML.NET pipeline that tokenizes text, runs it through an ONNX model, applies pooling and normalization, and returns embeddings. Also wraps the pipeline as `IEmbeddingGenerator<string, Embedding<float>>` from Microsoft.Extensions.AI.
+**What it does:** Builds ML.NET pipelines that process inputs (text or audio), run them through ONNX models, and return results. Wraps pipelines as Microsoft.Extensions.AI abstractions (`IEmbeddingGenerator`, `IChatClient`, `ITextToSpeechClient`, `IVoiceActivityDetector`).
 
-**What it doesn't know:** Where the model file came from. It receives a local file path and builds a pipeline from it.
+**What it doesn't know:** Where the model files came from. It receives local file paths and builds pipelines from them.
 
 This layer is ported from the [reference implementation](https://github.com/luisquintanilla/mlnet-embedding-custom-transforms) and includes:
 
@@ -78,6 +78,16 @@ This layer is ported from the [reference implementation](https://github.com/luis
 - `NormalizationTransformer` — L2 normalization
 - `OnnxEmbeddingGenerator` — MEAI `IEmbeddingGenerator` wrapper
 - `ModelPackager` — Save/load self-contained `.mlnet` zip files
+
+**Audio inference (`MLNet.AudioInference.Onnx` + `MLNet.Audio.Core`):**
+
+- `OnnxAudioClassificationEstimator` / `OnnxAudioClassificationTransformer` — Audio event classification (AST)
+- `OnnxAudioEmbeddingEstimator` / `OnnxAudioEmbeddingTransformer` — Audio embeddings (CLAP)
+- `OnnxVadEstimator` / `OnnxVadTransformer` — Voice activity detection (Silero VAD)
+- `OnnxWhisperEstimator` / `OnnxWhisperTransformer` — Speech-to-text (Whisper)
+- `OnnxSpeechT5TtsTransformer` — Text-to-speech (SpeechT5)
+- `MelSpectrogramExtractor` — Feature extraction with auto-padding for fixed-shape models
+- `AudioIO` — Load/save WAV files, resampling
 
 ### Layer 3: Model Package (authored by model publisher)
 
