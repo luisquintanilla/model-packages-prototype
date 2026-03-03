@@ -14,7 +14,7 @@ Console.WriteLine($"\n   TTS ready in {sw.ElapsedMilliseconds}ms\n");
 
 Console.WriteLine("2. Synthesizing speech...");
 var response = await tts.GetAudioAsync("Hello, this is a test of the SpeechT5 text to speech model.");
-Console.WriteLine($"   Duration: {response.Duration:F2}s");
+Console.WriteLine($"   Duration: {response.Duration}");
 Console.WriteLine($"   Voice: {response.Voice}");
 
 Console.WriteLine("\n3. Saving to WAV...");

@@ -7,7 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\ModelPackages\ModelPackages.csproj" />
-    <PackageReference Include="MLNet.AudioInference.Onnx" Version="0.1.0-preview.1" />
+    <PackageReference Include="MLNet.AudioInference.Onnx" Version="0.1.0-preview.2" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="model-manifest.json" />
