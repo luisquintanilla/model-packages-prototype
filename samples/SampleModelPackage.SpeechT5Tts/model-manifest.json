@@ -3,11 +3,11 @@
     "id": "microsoft/speecht5_tts",
     "revision": "main",
     "files": [
-      { "path": "encoder_model.onnx", "sha256": "<compute-after-download>", "size": 0 },
-      { "path": "decoder_model_merged.onnx", "sha256": "<compute-after-download>", "size": 0 },
-      { "path": "decoder_postnet_and_vocoder.onnx", "sha256": "<compute-after-download>", "size": 0 },
-      { "path": "spm_char.model", "sha256": "<compute-after-download>", "size": 0 },
-      { "path": "speaker.npy", "sha256": "<compute-after-download>", "size": 0 }
+      { "path": "encoder_model.onnx", "sha256": "688cc59481b71d4a15a68a56a366330bd4bfd054adcf19a0feddcf9d126e8d6b", "size": 342803471 },
+      { "path": "decoder_model_merged.onnx", "sha256": "7b54ec8a6de93d4033282e5655ebd3fd631bef5844f099ac79338aa237b4acea", "size": 244485821 },
+      { "path": "decoder_postnet_and_vocoder.onnx", "sha256": "77239e4c7a56859d43024325ce4c69f85910b8dab63225e6d73a7136707acad5", "size": 55432027 },
+      { "path": "spm_char.model", "sha256": "7fcc48f3e225f627b1641db410ceb0c8649bd2b0c982e150b03f8be3728ab560", "size": 238473 },
+      { "path": "speaker.npy", "sha256": "49691ea43c3bc17ffa7afa9ff68b3cfec92bbf316afa90a4c797e6f8fd88042b", "size": 2176 }
     ]
   },
   "sources": {

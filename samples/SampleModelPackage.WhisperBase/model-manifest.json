@@ -3,8 +3,8 @@
     "id": "openai/whisper-base",
     "revision": "main",
     "files": [
-      { "path": "onnx/encoder_model.onnx", "sha256": "<compute-after-download>", "size": 0 },
-      { "path": "onnx/decoder_model_merged.onnx", "sha256": "<compute-after-download>", "size": 0 }
+      { "path": "onnx/encoder_model.onnx", "sha256": "a9f3b752833b49e880dec91ee5b6d936112be7c3ea07c221024ba493439f46fe", "size": 82468078 },
+      { "path": "onnx/decoder_model_merged.onnx", "sha256": "514903744bb1b45803ec571af99b31110491c6f77b0a154825866995fb124b73", "size": 208521528 }
     ]
   },
   "sources": {

@@ -1,15 +1,15 @@
 {
   "model": {
-    "id": "snakers4/silero-vad",
+    "id": "onnx-community/silero-vad",
     "revision": "main",
     "files": [
-      { "path": "silero_vad.onnx", "sha256": "<compute-after-download>", "size": 0 }
+      { "path": "onnx/model.onnx", "sha256": "a4a068cd6cf1ea8355b84327595838ca748ec29a25bc91fc82e6c299ccdc5808", "size": 2243022 }
     ]
   },
   "sources": {
     "huggingface": {
       "type": "huggingface",
-      "repo": "snakers4/silero-vad",
+      "repo": "onnx-community/silero-vad",
       "revision": "main"
     }
   },

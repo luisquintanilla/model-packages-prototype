@@ -3,8 +3,8 @@
     "id": "openai/whisper-tiny",
     "revision": "main",
     "files": [
-      { "path": "onnx/encoder_model.onnx", "sha256": "<compute-after-download>", "size": 0 },
-      { "path": "onnx/decoder_model_merged.onnx", "sha256": "<compute-after-download>", "size": 0 }
+      { "path": "onnx/encoder_model.onnx", "sha256": "6642befb640f950d4a8cbbd17834d59e7e75f575b81ccf213e06b050623ab1dd", "size": 32904992 },
+      { "path": "onnx/decoder_model_merged.onnx", "sha256": "8d20f4157407006e871d63ca0a3c54dddd7db33dfc4ee076960f1f8b2763ce3e", "size": 118553827 }
     ]
   },
   "sources": {

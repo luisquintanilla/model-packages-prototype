@@ -3,7 +3,7 @@
     "id": "MIT/ast-finetuned-audioset-10-10-0.4593",
     "revision": "main",
     "files": [
-      { "path": "onnx/model.onnx", "sha256": "<compute-after-download>", "size": 0 }
+      { "path": "onnx/model.onnx", "sha256": "249b57721b7752442ec10dc3ace6f7dcd3ff0460d2c98a8709925ce5b72b69e0", "size": 346659433 }
     ]
   },
   "sources": {
