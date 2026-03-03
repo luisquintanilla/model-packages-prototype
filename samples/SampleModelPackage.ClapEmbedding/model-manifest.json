@@ -1,0 +1,21 @@
+{
+  "model": {
+    "id": "laion/clap-htsat-unfused",
+    "revision": "main",
+    "files": [
+      {
+        "path": "model.onnx",
+        "sha256": "0763d8c6d03fe1675a3905b96ae3ff9ebfe316e3c0af9b64f8658ece57f0d5a5",
+        "size": 119654416
+      }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface",
+      "repo": "lquint/clap-htsat-unfused-onnx",
+      "revision": "main"
+    }
+  },
+  "defaultSource": "huggingface"
+}

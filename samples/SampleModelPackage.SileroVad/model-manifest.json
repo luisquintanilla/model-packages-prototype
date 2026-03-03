@@ -1,0 +1,17 @@
+{
+  "model": {
+    "id": "snakers4/silero-vad",
+    "revision": "main",
+    "files": [
+      { "path": "silero_vad.onnx", "sha256": "<compute-after-download>", "size": 0 }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface",
+      "repo": "snakers4/silero-vad",
+      "revision": "main"
+    }
+  },
+  "defaultSource": "huggingface"
+}

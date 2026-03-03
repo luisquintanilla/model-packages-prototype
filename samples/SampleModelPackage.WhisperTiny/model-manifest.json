@@ -1,0 +1,18 @@
+{
+  "model": {
+    "id": "openai/whisper-tiny",
+    "revision": "main",
+    "files": [
+      { "path": "onnx/encoder_model.onnx", "sha256": "<compute-after-download>", "size": 0 },
+      { "path": "onnx/decoder_model_merged.onnx", "sha256": "<compute-after-download>", "size": 0 }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface",
+      "repo": "onnx-community/whisper-tiny",
+      "revision": "main"
+    }
+  },
+  "defaultSource": "huggingface"
+}

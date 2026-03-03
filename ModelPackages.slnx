@@ -49,4 +49,28 @@
     <Project Path="samples/SampleModelPackage.GteEmbedding/SampleModelPackage.GteEmbedding.csproj" />
     <Project Path="samples/SampleConsumer.GteEmbedding/SampleConsumer.GteEmbedding.csproj" />
   </Folder>
+  <Folder Name="/samples/clap-embedding/">
+    <Project Path="samples/SampleModelPackage.ClapEmbedding/SampleModelPackage.ClapEmbedding.csproj" />
+    <Project Path="samples/SampleConsumer.ClapEmbedding/SampleConsumer.ClapEmbedding.csproj" />
+  </Folder>
+  <Folder Name="/samples/silero-vad/">
+    <Project Path="samples/SampleModelPackage.SileroVad/SampleModelPackage.SileroVad.csproj" />
+    <Project Path="samples/SampleConsumer.SileroVad/SampleConsumer.SileroVad.csproj" />
+  </Folder>
+  <Folder Name="/samples/ast-audioset/">
+    <Project Path="samples/SampleModelPackage.AstAudioSet/SampleModelPackage.AstAudioSet.csproj" />
+    <Project Path="samples/SampleConsumer.AstAudioSet/SampleConsumer.AstAudioSet.csproj" />
+  </Folder>
+  <Folder Name="/samples/whisper-tiny/">
+    <Project Path="samples/SampleModelPackage.WhisperTiny/SampleModelPackage.WhisperTiny.csproj" />
+    <Project Path="samples/SampleConsumer.WhisperTiny/SampleConsumer.WhisperTiny.csproj" />
+  </Folder>
+  <Folder Name="/samples/whisper-base/">
+    <Project Path="samples/SampleModelPackage.WhisperBase/SampleModelPackage.WhisperBase.csproj" />
+    <Project Path="samples/SampleConsumer.WhisperBase/SampleConsumer.WhisperBase.csproj" />
+  </Folder>
+  <Folder Name="/samples/speecht5-tts/">
+    <Project Path="samples/SampleModelPackage.SpeechT5Tts/SampleModelPackage.SpeechT5Tts.csproj" />
+    <Project Path="samples/SampleConsumer.SpeechT5Tts/SampleConsumer.SpeechT5Tts.csproj" />
+  </Folder>
 </Solution>

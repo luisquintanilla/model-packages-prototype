@@ -1,0 +1,17 @@
+{
+  "model": {
+    "id": "MIT/ast-finetuned-audioset-10-10-0.4593",
+    "revision": "main",
+    "files": [
+      { "path": "onnx/model.onnx", "sha256": "<compute-after-download>", "size": 0 }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface",
+      "repo": "onnx-community/ast-finetuned-audioset-10-10-0.4593-ONNX",
+      "revision": "main"
+    }
+  },
+  "defaultSource": "huggingface"
+}

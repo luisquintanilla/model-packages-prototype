@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Description>Sample model package — laion/clap-htsat-unfused (audio embeddings via ONNX).</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ModelPackages\ModelPackages.csproj" />
+    <PackageReference Include="MLNet.AudioInference.Onnx" Version="0.1.0-preview.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="model-manifest.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="build\SampleModelPackage.ClapEmbedding.props" Pack="true" PackagePath="build\" />
+    <None Include="build\SampleModelPackage.ClapEmbedding.targets" Pack="true" PackagePath="build\" />
+  </ItemGroup>
+</Project>

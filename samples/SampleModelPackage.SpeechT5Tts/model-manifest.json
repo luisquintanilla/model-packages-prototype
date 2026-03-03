@@ -1,0 +1,21 @@
+{
+  "model": {
+    "id": "microsoft/speecht5_tts",
+    "revision": "main",
+    "files": [
+      { "path": "encoder_model.onnx", "sha256": "<compute-after-download>", "size": 0 },
+      { "path": "decoder_model_merged.onnx", "sha256": "<compute-after-download>", "size": 0 },
+      { "path": "decoder_postnet_and_vocoder.onnx", "sha256": "<compute-after-download>", "size": 0 },
+      { "path": "spm_char.model", "sha256": "<compute-after-download>", "size": 0 },
+      { "path": "speaker.npy", "sha256": "<compute-after-download>", "size": 0 }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface",
+      "repo": "NeuML/txtai-speecht5-onnx",
+      "revision": "main"
+    }
+  },
+  "defaultSource": "huggingface"
+}
