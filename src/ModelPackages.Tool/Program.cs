@@ -21,6 +21,8 @@ static async Task<int> RunAsync(string[] args)
     string? manifest = null;
     string? source = null;
     string? cacheDir = null;
+    bool orphansOnly = false;
+    bool yes = false;
 
     for (int i = 1; i < args.Length; i++)
     {
@@ -34,6 +36,12 @@ static async Task<int> RunAsync(string[] args)
                 break;
             case "--cache-dir" when i + 1 < args.Length:
                 cacheDir = args[++i];
+                break;
+            case "--orphans-only":
+                orphansOnly = true;
+                break;
+            case "--yes" or "-y":
+                yes = true;
                 break;
             default:
                 Console.Error.WriteLine($"Unknown argument: {args[i]}");
@@ -54,6 +62,11 @@ static async Task<int> RunAsync(string[] args)
     {
         CacheInfo(options);
         return 0;
+    }
+
+    if (command == "purge-cache")
+    {
+        return PurgeCache(options, orphansOnly, yes);
     }
 
     if (manifest is null)
@@ -174,6 +187,13 @@ static void CacheInfo(ModelOptions options)
     Console.WriteLine($"Max size:        {(maxSize.HasValue ? FormatSize(maxSize.Value) + " (configured)" : "unlimited")}");
     Console.WriteLine($"Entries:         {index.Entries.Count} file(s)");
 
+    var orphans = index.FindOrphanedFiles(cacheDir);
+    if (orphans.Count > 0)
+    {
+        var orphanTotal = orphans.Sum(o => o.SizeBytes);
+        Console.WriteLine($"Orphaned:        {orphans.Count} file(s), {FormatSize(orphanTotal)} (run purge-cache --orphans-only to reclaim)");
+    }
+
     if (index.Entries.Count > 0)
     {
         Console.WriteLine();
@@ -186,6 +206,65 @@ static void CacheInfo(ModelOptions options)
             Console.WriteLine($"  {entry.Path,-60} {FormatSize(entry.SizeBytes),10}  Last used: {agoStr}");
         }
     }
+}
+
+static int PurgeCache(ModelOptions options, bool orphansOnly, bool confirmed)
+{
+    var cacheDir = ModelPackage.GetCacheDirectory(options);
+
+    if (!Directory.Exists(cacheDir))
+    {
+        Console.WriteLine("Cache directory does not exist. Nothing to purge.");
+        return 0;
+    }
+
+    if (orphansOnly)
+    {
+        var index = ModelPackage.GetCacheInfo(options);
+        var orphans = index.FindOrphanedFiles(cacheDir);
+        if (orphans.Count == 0)
+        {
+            Console.WriteLine("No orphaned files found.");
+            return 0;
+        }
+
+        var orphanTotal = orphans.Sum(o => o.SizeBytes);
+        Console.WriteLine($"Found {orphans.Count} orphaned file(s) ({FormatSize(orphanTotal)}):");
+        foreach (var (path, size) in orphans.OrderByDescending(o => o.SizeBytes))
+            Console.WriteLine($"  {path,-60} {FormatSize(size),10}");
+
+        if (!confirmed)
+        {
+            Console.WriteLine();
+            Console.WriteLine("Run with --yes to delete these files.");
+            return 0;
+        }
+
+        var reclaimed = ModelPackage.PurgeOrphanedFiles(options, msg => Console.Error.WriteLine(msg));
+        Console.WriteLine($"Purged orphaned files. Reclaimed {FormatSize(reclaimed)}.");
+        return 0;
+    }
+
+    // Full purge
+    long totalSize = 0;
+    foreach (var file in Directory.EnumerateFiles(cacheDir, "*", SearchOption.AllDirectories))
+    {
+        try { totalSize += new FileInfo(file).Length; } catch { }
+    }
+
+    Console.WriteLine($"Cache directory: {cacheDir}");
+    Console.WriteLine($"Total size:      {FormatSize(totalSize)}");
+
+    if (!confirmed)
+    {
+        Console.WriteLine();
+        Console.WriteLine("This will delete the ENTIRE cache directory. Run with --yes to proceed.");
+        return 0;
+    }
+
+    var purged = ModelPackage.PurgeAllCache(options, msg => Console.Error.WriteLine(msg));
+    Console.WriteLine($"Cache purged. Reclaimed {FormatSize(purged)}.");
+    return 0;
 }
 
 static string FormatSize(long bytes)
@@ -210,11 +289,14 @@ static void PrintUsage()
           info          Show resolved source, cache path, manifest metadata
           clear-cache   Remove cached model
           cache-info    Show cache usage and entries (no --manifest required)
+          purge-cache   Delete cache files (no --manifest required)
 
         Options:
           --manifest <path>    Path to model-manifest.json (required for most commands)
           --source <name|url>  Override model source
           --cache-dir <path>   Override cache directory
+          --orphans-only       purge-cache: only delete files not tracked by the cache index
+          --yes, -y            purge-cache: skip confirmation prompt
 
         Exit codes:
           0  Success

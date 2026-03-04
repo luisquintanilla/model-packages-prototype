@@ -104,13 +104,70 @@ $ model-packages clear-cache --manifest samples/SampleModelPackage.Onnx/model-ma
 Cache cleared.
 ```
 
+### `cache-info`
+
+Shows cache usage, tracked entries, and orphaned file counts. Does not require `--manifest`.
+
+```bash
+model-packages cache-info [--cache-dir <path>]
+```
+
+**Example:**
+```bash
+$ model-packages cache-info
+Cache directory: /home/user/.cache/modelpackages
+Total size:      1.2 GB
+Max size:        unlimited
+Entries:         11 file(s)
+Orphaned:        8 file(s), 1.9 GB (run purge-cache --orphans-only to reclaim)
+
+  microsoft/speecht5_tts/main/encoder_model.onnx               326.9 MB  Last used: 2 days ago
+  ...
+```
+
+### `purge-cache`
+
+Deletes cache files. By default deletes the entire cache directory. Use `--orphans-only` to only remove files not tracked by the cache index.
+
+```bash
+model-packages purge-cache [--orphans-only] [--yes] [--cache-dir <path>]
+```
+
+| Flag | Description |
+|---|---|
+| `--orphans-only` | Only delete files on disk that are not tracked by the cache index |
+| `--yes`, `-y` | Skip confirmation — required to actually delete files |
+
+**Preview what would be deleted (dry run):**
+```bash
+$ model-packages purge-cache --orphans-only
+Found 8 orphaned file(s) (1.9 GB):
+  distilbert/.../main/onnx/model.onnx                            255.5 MB
+  ...
+Run with --yes to delete these files.
+```
+
+**Delete orphans:**
+```bash
+$ model-packages purge-cache --orphans-only --yes
+Purged orphaned files. Reclaimed 1.9 GB.
+```
+
+**Full cache wipe:**
+```bash
+$ model-packages purge-cache --yes
+Cache purged. Reclaimed 3.1 GB.
+```
+
 ## Global Options
 
 | Option | Description |
 |---|---|
-| `--manifest <path>` | **(Required)** Path to a `model-manifest.json` file |
+| `--manifest <path>` | **(Required for most commands)** Path to a `model-manifest.json` file |
 | `--source <name\|url>` | Override the model source. Can be a named source (e.g., `company-mirror`) or a direct URL (e.g., `https://...` or `file:///...`) |
 | `--cache-dir <path>` | Override the default cache directory |
+| `--orphans-only` | `purge-cache` only: delete untracked files instead of entire cache |
+| `--yes`, `-y` | `purge-cache` only: skip confirmation prompt |
 | `--help`, `-h` | Show usage information |
 
 ## Exit Codes
