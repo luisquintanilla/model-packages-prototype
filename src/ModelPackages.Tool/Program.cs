@@ -146,6 +146,8 @@ static async Task<int> InfoAsync(ModelPackage package, ModelOptions options)
 {
     var info = await package.GetModelInfoAsync(options);
     Console.WriteLine($"Model ID:        {info.ModelId}");
+    if (info.Version != null)
+        Console.WriteLine($"Version:         {info.Version}");
     Console.WriteLine($"Revision:        {info.Revision}");
     Console.WriteLine($"File Name:       {info.FileName}");
     Console.WriteLine($"SHA256:          {info.Sha256}");

@@ -3,6 +3,7 @@ namespace ModelPackages;
 /// <summary>Read-only information about a resolved model.</summary>
 public sealed record ModelInfo(
     string ModelId,
+    string? Version,
     string Revision,
     string FileName,
     string Sha256,
