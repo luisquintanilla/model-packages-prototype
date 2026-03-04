@@ -8,10 +8,10 @@
   -->
   <Target Name="_ModelPackages_SetVersionFromManifest"
           BeforeTargets="GetAssemblyVersion;GenerateNuspec;Pack"
-          Condition="'$(VersionPrefix)' == '' AND Exists('$(MSBuildProjectDirectory)\model-manifest.json')">
+          Condition="'$(VersionPrefix)' == '' AND Exists('$(MSBuildProjectDirectory)/model-manifest.json')">
 
     <PropertyGroup>
-      <_ModelManifestContent>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)\model-manifest.json'))</_ModelManifestContent>
+      <_ModelManifestContent>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/model-manifest.json'))</_ModelManifestContent>
       <_ModelVersionMatch>$([System.Text.RegularExpressions.Regex]::Match($(_ModelManifestContent), '"version"\s*:\s*"([^"]+)"').Groups[1].Value)</_ModelVersionMatch>
     </PropertyGroup>
 
