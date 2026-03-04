@@ -1,0 +1,24 @@
+<Project>
+
+  <!--
+    Auto-derive VersionPrefix from model-manifest.json when:
+    1. The manifest exists in the project directory
+    2. It contains a "version" field in the model block
+    3. VersionPrefix is not already set explicitly in the csproj
+  -->
+  <Target Name="_ModelPackages_SetVersionFromManifest"
+          BeforeTargets="GetAssemblyVersion;GenerateNuspec;Pack"
+          Condition="'$(VersionPrefix)' == '' AND Exists('$(MSBuildProjectDirectory)/model-manifest.json')">
+
+    <PropertyGroup>
+      <_ModelManifestContent>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/model-manifest.json'))</_ModelManifestContent>
+      <_ModelVersionMatch>$([System.Text.RegularExpressions.Regex]::Match($(_ModelManifestContent), '"version"\s*:\s*"([^"]+)"').Groups[1].Value)</_ModelVersionMatch>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(_ModelVersionMatch)' != ''">
+      <VersionPrefix>$(_ModelVersionMatch)</VersionPrefix>
+    </PropertyGroup>
+
+  </Target>
+
+</Project>

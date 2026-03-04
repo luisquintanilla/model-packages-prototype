@@ -1,0 +1,22 @@
+{
+  "model": {
+    "id": "microsoft/phi-4-mini",
+    "version": "4.0.0",
+    "revision": "main",
+    "files": [
+      {
+        "path": "model.onnx",
+        "sha256": "abc123def456",
+        "size": 2500000000
+      }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface",
+      "repo": "microsoft/phi-4-mini-onnx",
+      "revision": "main"
+    }
+  },
+  "defaultSource": "huggingface"
+}

@@ -42,6 +42,7 @@ Create `model-manifest.json` in your project root. List all files the model need
 {
   "model": {
     "id": "sentence-transformers/all-MiniLM-L6-v2",
+    "version": "1.0.0",
     "revision": "main",
     "files": [
       {
@@ -66,6 +67,8 @@ Create `model-manifest.json` in your project root. List all files the model need
 ```
 
 The first file in the `files` array is the **primary model file** (returned by `EnsureModelAsync()`). Additional files (tokenizer vocabularies, config files) are downloaded alongside it when using `EnsureFilesAsync()`.
+
+**`model.version`** (optional): Tracks the upstream model version (e.g., `"1.0.0"`). When present, the SDK can auto-derive `VersionPrefix` for NuGet packaging — see [MSBuild auto-versioning](#msbuild-auto-versioning). Omit this field if version tracking isn't needed; the SDK treats it as `null`.
 
 **Getting the SHA256:** For HuggingFace models, the SHA256 is the Git LFS OID. You can find it on the model page under "Files and versions" → click the file → look for the LFS pointer, or run:
 
@@ -447,3 +450,26 @@ See: `SampleModelPackage.WhisperTiny`, `SampleModelPackage.WhisperBase`
 Expose a `CreateTtsClientAsync()` method that returns an `ITextToSpeechClient` (from MEAI abstractions). For direct access, `CreateTtsAsync()` returns the transformer directly. SpeechT5 requires 5 files: encoder, decoder, vocoder, tokenizer model, and speaker embeddings — all listed in the manifest and downloaded via `EnsureFilesAsync()`.
 
 See: `SampleModelPackage.SpeechT5Tts`
+
+## MSBuild Auto-Versioning
+
+When `model.version` is present in `model-manifest.json`, the SDK's MSBuild targets can automatically set `VersionPrefix` at build time — eliminating duplicate version declarations between the manifest and csproj.
+
+### How it works
+
+If your manifest includes a version:
+```json
+{
+  "model": {
+    "id": "microsoft/phi-4-mini",
+    "version": "4.0.0",
+    ...
+  }
+}
+```
+
+Then `dotnet pack` will produce a package versioned `4.0.0` without needing `<VersionPrefix>` in your csproj.
+
+### Override behavior
+
+If your csproj explicitly sets `<VersionPrefix>`, it takes precedence over the manifest version. This lets you opt out of auto-versioning on a per-project basis.

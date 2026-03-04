@@ -78,6 +78,7 @@ public sealed class ModelPackage
 
         var info = new ModelInfo(
             ModelId: _manifest.Model.Id,
+            Version: _manifest.Model.Version,
             Revision: _manifest.Model.Revision,
             FileName: Path.GetFileName(file.Path),
             Sha256: file.Sha256,

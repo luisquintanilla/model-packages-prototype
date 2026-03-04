@@ -120,4 +120,41 @@ public class ManifestTests
             File.Delete(tempFile);
         }
     }
+
+    [Fact]
+    public void FromFile_VersionPresent_ParsedCorrectly()
+    {
+        var manifest = ModelManifest.FromFile(FixturePath("versioned-manifest.json"));
+
+        Assert.Equal("microsoft/phi-4-mini", manifest.Model.Id);
+        Assert.Equal("4.0.0", manifest.Model.Version);
+        Assert.Equal("main", manifest.Model.Revision);
+    }
+
+    [Fact]
+    public void FromFile_VersionAbsent_IsNull()
+    {
+        var manifest = ModelManifest.FromFile(FixturePath("valid-manifest.json"));
+
+        Assert.Null(manifest.Model.Version);
+    }
+
+    [Fact]
+    public async Task GetModelInfoAsync_VersionPresent_PropagatedToModelInfo()
+    {
+        var package = ModelPackage.FromManifestFile(FixturePath("versioned-manifest.json"));
+        var info = await package.GetModelInfoAsync();
+
+        Assert.Equal("4.0.0", info.Version);
+        Assert.Equal("microsoft/phi-4-mini", info.ModelId);
+    }
+
+    [Fact]
+    public async Task GetModelInfoAsync_VersionAbsent_NullInModelInfo()
+    {
+        var package = ModelPackage.FromManifestFile(FixturePath("valid-manifest.json"));
+        var info = await package.GetModelInfoAsync();
+
+        Assert.Null(info.Version);
+    }
 }

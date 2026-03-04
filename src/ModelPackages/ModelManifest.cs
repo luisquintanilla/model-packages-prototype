@@ -58,11 +58,15 @@ public sealed class ModelManifest
 
     // ── Nested types ─────────────────────────────────────────────────
 
-    /// <summary>Identity of the model (id, revision, file list).</summary>
+    /// <summary>Identity of the model (id, version, revision, file list).</summary>
     public sealed record ModelIdentity
     {
         [JsonPropertyName("id")]
         public required string Id { get; init; }
+
+        /// <summary>Optional upstream model version (e.g., "4.0.0"). Null when not specified.</summary>
+        [JsonPropertyName("version")]
+        public string? Version { get; init; }
 
         [JsonPropertyName("revision")]
         public required string Revision { get; init; }
