@@ -76,6 +76,7 @@ public sealed class CacheIndex
     }
 
     /// <summary>Returns total cache size in bytes.</summary>
+    [JsonIgnore]
     public long TotalSizeBytes => Entries.Sum(e => e.SizeBytes);
 
     /// <summary>
@@ -136,6 +137,82 @@ public sealed class CacheIndex
             var fullPath = Path.Combine(cacheDir, e.Path.Replace('/', Path.DirectorySeparatorChar));
             return !File.Exists(fullPath);
         });
+    }
+
+    /// <summary>
+    /// Discovers files on disk that are not tracked by the cache index.
+    /// Returns a list of (relativePath, sizeBytes) for each orphaned file.
+    /// Excludes sidecar (.sha256), lock (.lock), partial (.partial.*), and the index file itself.
+    /// </summary>
+    public List<(string RelativePath, long SizeBytes)> FindOrphanedFiles(string cacheDir)
+    {
+        var orphans = new List<(string, long)>();
+        if (!Directory.Exists(cacheDir))
+            return orphans;
+
+        var trackedPaths = new HashSet<string>(
+            Entries.Select(e => e.Path),
+            StringComparer.OrdinalIgnoreCase);
+
+        foreach (var file in Directory.EnumerateFiles(cacheDir, "*", SearchOption.AllDirectories))
+        {
+            var name = Path.GetFileName(file);
+
+            // Skip metadata files
+            if (name.Equals(IndexFileName, StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (file.EndsWith(".sha256", StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (file.EndsWith(".lock", StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (name.Contains(".partial.", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var relativePath = Path.GetRelativePath(cacheDir, file).Replace(Path.DirectorySeparatorChar, '/');
+            if (!trackedPaths.Contains(relativePath))
+                orphans.Add((relativePath, new FileInfo(file).Length));
+        }
+
+        return orphans;
+    }
+
+    /// <summary>
+    /// Deletes orphaned files (on disk but not in the index), their sidecars, and empty directories.
+    /// Returns the total bytes reclaimed.
+    /// </summary>
+    public long PurgeOrphans(string cacheDir, Action<string>? log = null)
+    {
+        var orphans = FindOrphanedFiles(cacheDir);
+        long reclaimed = 0;
+
+        foreach (var (relativePath, sizeBytes) in orphans)
+        {
+            var fullPath = Path.Combine(cacheDir, relativePath.Replace('/', Path.DirectorySeparatorChar));
+            try
+            {
+                if (File.Exists(fullPath))
+                {
+                    File.Delete(fullPath);
+                    reclaimed += sizeBytes;
+                    log?.Invoke($"Deleted orphan: {relativePath} ({sizeBytes / 1024 / 1024} MB)");
+                }
+
+                // Clean sidecar if present
+                var sidecar = fullPath + ".sha256";
+                if (File.Exists(sidecar))
+                    File.Delete(sidecar);
+            }
+            catch
+            {
+                // File may be locked — skip
+                continue;
+            }
+        }
+
+        // Clean empty directories
+        ModelCache.CleanEmptyDirectories(cacheDir);
+
+        return reclaimed;
     }
 }
 

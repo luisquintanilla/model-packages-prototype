@@ -140,6 +140,30 @@ internal static class ModelCache
         }
     }
 
+    /// <summary>
+    /// Removes empty directories under the given root, walking bottom-up.
+    /// Stops at the root directory itself (never deletes it).
+    /// </summary>
+    public static void CleanEmptyDirectories(string rootDir)
+    {
+        if (!Directory.Exists(rootDir))
+            return;
+
+        foreach (var dir in Directory.GetDirectories(rootDir, "*", SearchOption.AllDirectories)
+            .OrderByDescending(d => d.Length)) // deepest first
+        {
+            try
+            {
+                if (Directory.Exists(dir) &&
+                    !Directory.EnumerateFileSystemEntries(dir).Any())
+                {
+                    Directory.Delete(dir);
+                }
+            }
+            catch { }
+        }
+    }
+
     private sealed class LockHandle : IDisposable
     {
         private readonly FileStream _stream;

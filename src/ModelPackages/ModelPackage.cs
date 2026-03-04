@@ -115,6 +115,16 @@ public sealed class ModelPackage
                 File.Delete(cachePath);
             IntegrityVerifier.DeleteSidecar(cachePath);
         }
+
+        // Update cache index to remove stale entries
+        try
+        {
+            var cacheDir = ModelCache.ResolveCacheDir(options);
+            var index = CacheIndex.Load(cacheDir);
+            index.Reconcile(cacheDir);
+            index.Save(cacheDir);
+        }
+        catch { }
     }
 
     /// <summary>
@@ -136,6 +146,42 @@ public sealed class ModelPackage
     /// <summary>Returns the configured maximum cache size, or null if unlimited.</summary>
     public static long? GetMaxCacheSize()
         => ModelSourceConfig.GetMaxCacheSize();
+
+    /// <summary>
+    /// Deletes cached files that are not tracked by the cache index (orphans).
+    /// Returns the total bytes reclaimed.
+    /// </summary>
+    public static long PurgeOrphanedFiles(ModelOptions? options = null, Action<string>? log = null)
+    {
+        var cacheDir = ModelCache.ResolveCacheDir(options);
+        var index = CacheIndex.Load(cacheDir);
+        index.Reconcile(cacheDir);
+        var reclaimed = index.PurgeOrphans(cacheDir, log);
+        index.Save(cacheDir);
+        return reclaimed;
+    }
+
+    /// <summary>
+    /// Deletes the entire cache directory and all contents.
+    /// Returns the total bytes deleted.
+    /// </summary>
+    public static long PurgeAllCache(ModelOptions? options = null, Action<string>? log = null)
+    {
+        var cacheDir = ModelCache.ResolveCacheDir(options);
+        if (!Directory.Exists(cacheDir))
+            return 0;
+
+        long totalSize = 0;
+        foreach (var file in Directory.EnumerateFiles(cacheDir, "*", SearchOption.AllDirectories))
+        {
+            try { totalSize += new FileInfo(file).Length; } catch { }
+        }
+
+        log?.Invoke($"Deleting entire cache directory: {cacheDir}");
+        Directory.Delete(cacheDir, recursive: true);
+        log?.Invoke($"Reclaimed {totalSize / 1024 / 1024} MB");
+        return totalSize;
+    }
 
     // ── Static utilities ────────────────────────────────────────────
 
