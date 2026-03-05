@@ -32,7 +32,8 @@ internal sealed class MockModelServer : IAsyncDisposable
         _app.MapGet("/{**path}", (HttpContext ctx) =>
         {
             var path = ctx.Request.Path.Value?.TrimStart('/') ?? "";
-            _requests.Add(new RequestRecord(path, ctx.Request.Headers.Authorization.ToString()));
+            _requests.Add(new RequestRecord(path, ctx.Request.Headers.Authorization.ToString(),
+                ctx.Request.Headers.Range.ToString()));
 
             if (_redirects.TryGetValue(path, out var redirect))
             {
@@ -48,6 +49,27 @@ internal sealed class MockModelServer : IAsyncDisposable
             {
                 entry.FailCount--;
                 return Results.StatusCode(entry.FailStatusCode);
+            }
+
+            // Range request support
+            var rangeHeader = ctx.Request.Headers.Range.ToString();
+            if (!string.IsNullOrEmpty(rangeHeader) && entry.SupportsRange)
+            {
+                // Parse "bytes=N-"
+                var rangeStr = rangeHeader.Replace("bytes=", "");
+                var parts = rangeStr.Split('-');
+                if (long.TryParse(parts[0], out var from))
+                {
+                    if (from >= entry.Content.Length)
+                    {
+                        ctx.Response.StatusCode = 416;
+                        return Results.StatusCode(416);
+                    }
+                    var slice = entry.Content[(int)from..];
+                    ctx.Response.StatusCode = 206;
+                    ctx.Response.Headers.ContentRange = $"bytes {from}-{entry.Content.Length - 1}/{entry.Content.Length}";
+                    return Results.Bytes(slice, "application/octet-stream");
+                }
             }
 
             return Results.Bytes(entry.Content, "application/octet-stream");
@@ -77,6 +99,12 @@ internal sealed class MockModelServer : IAsyncDisposable
         _redirects[path] = new RedirectEntry(location, statusCode);
     }
 
+    /// <summary>Register a file that supports HTTP Range requests (206 Partial Content).</summary>
+    public void AddRangeFile(string path, byte[] content)
+    {
+        _files[path] = new FileEntry(content) { SupportsRange = true };
+    }
+
     public async ValueTask DisposeAsync()
     {
         await _app.DisposeAsync();
@@ -87,9 +115,10 @@ internal sealed class MockModelServer : IAsyncDisposable
         public byte[] Content { get; } = content;
         public int FailCount { get; set; }
         public int FailStatusCode { get; set; } = 500;
+        public bool SupportsRange { get; set; }
     }
 
     private sealed record RedirectEntry(string Location, int StatusCode);
 
-    internal sealed record RequestRecord(string Path, string AuthorizationHeader);
+    internal sealed record RequestRecord(string Path, string AuthorizationHeader, string RangeHeader = "");
 }

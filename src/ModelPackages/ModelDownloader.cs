@@ -73,10 +73,17 @@ internal static class ModelDownloader
         HashSet<string>? allowedHosts)
     {
         var progress = options?.Progress;
-        var fileName = Path.GetFileName(destinationPath);
+        var fileName = Path.GetFileName(new Uri(url).AbsolutePath);
 
         try
         {
+            long existingBytes = 0;
+            if (File.Exists(destinationPath))
+                existingBytes = new FileInfo(destinationPath).Length;
+
+            // Allow one restart if Range request gets 416 or Content-Range mismatch
+            for (int rangeAttempt = 0; rangeAttempt < 2; rangeAttempt++)
+            {
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
 
             // HuggingFace auth: bearer token from options or HF_TOKEN env
@@ -88,15 +95,10 @@ internal static class ModelDownloader
             }
 
             // Resume support: if partial file exists, request remaining bytes
-            long existingBytes = 0;
-            if (File.Exists(destinationPath))
+            if (existingBytes > 0)
             {
-                existingBytes = new FileInfo(destinationPath).Length;
-                if (existingBytes > 0)
-                {
-                    request.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(existingBytes, null);
-                    log($"Resuming download from byte {existingBytes}...");
-                }
+                request.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(existingBytes, null);
+                log($"Resuming download from byte {existingBytes}...");
             }
 
             log($"Downloading from {RedactUrl(url)}...");
@@ -153,6 +155,16 @@ internal static class ModelDownloader
 
             using (response)
             {
+            // Handle 416 (Range Not Satisfiable): delete partial, restart without Range
+            if ((int)response.StatusCode == 416 && existingBytes > 0 && rangeAttempt == 0)
+            {
+                log("Range request failed (416). Deleting partial file and restarting from scratch.");
+                if (File.Exists(destinationPath))
+                    File.Delete(destinationPath);
+                existingBytes = 0;
+                continue;
+            }
+
             if (!response.IsSuccessStatusCode)
             {
                 var statusCode = (int)response.StatusCode;
@@ -164,16 +176,26 @@ internal static class ModelDownloader
                     _ => $"HTTP {statusCode}: Download failed from {RedactUrl(url)}."
                 };
 
-                // If Range request fails (416), delete partial and the caller's retry will start fresh
-                if (statusCode == 416 && File.Exists(destinationPath))
-                {
-                    File.Delete(destinationPath);
-                }
                 throw new HttpRequestException(message, null, response.StatusCode);
             }
 
             // Determine if we're resuming or starting fresh
             bool resuming = existingBytes > 0 && response.StatusCode == System.Net.HttpStatusCode.PartialContent;
+
+            // Content-Range validation: ensure server is resuming from where we expect
+            if (resuming)
+            {
+                var contentRange = response.Content.Headers.ContentRange;
+                if (contentRange?.From != existingBytes && rangeAttempt == 0)
+                {
+                    log($"Content-Range mismatch (expected from={existingBytes}, got {contentRange}). Restarting from scratch.");
+                    if (File.Exists(destinationPath))
+                        File.Delete(destinationPath);
+                    existingBytes = 0;
+                    continue;
+                }
+            }
+
             if (existingBytes > 0 && !resuming)
             {
                 // Server doesn't support Range — restart from scratch
@@ -227,7 +249,9 @@ internal static class ModelDownloader
 
             // Don't report Completed here — let ModelPackage report it after verification succeeds
             log($"Download complete: {totalRead / 1024 / 1024} MB");
+            return; // Success — downloaded within this range attempt
             } // using (response)
+            } // for rangeAttempt
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception) when (progress != null)
