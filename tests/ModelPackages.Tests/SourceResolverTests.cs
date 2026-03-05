@@ -2,6 +2,7 @@ using Xunit;
 
 namespace ModelPackages.Tests;
 
+[Collection("EnvVarTests")]
 public class SourceResolverTests
 {
     private static ModelManifest LoadFixture() =>
@@ -13,12 +14,33 @@ public class SourceResolverTests
         var manifest = LoadFixture();
         var file = manifest.Model.Files[0];
 
-        var (url, sourceName) = ModelSourceResolver.Resolve(manifest, file, options: null);
+        // Isolate from machine-level config files that could interfere
+        var prevHome = Environment.GetEnvironmentVariable("USERPROFILE");
+        var prevHomeUnix = Environment.GetEnvironmentVariable("HOME");
+        var prevDir = Directory.GetCurrentDirectory();
+        var tempDir = Path.Combine(Path.GetTempPath(), "resolver-test-" + Guid.NewGuid().ToString("N")[..8]);
+        Directory.CreateDirectory(tempDir);
 
-        Assert.Equal("huggingface", sourceName);
-        Assert.Contains("huggingface.co", url);
-        Assert.Contains("sentence-transformers/all-MiniLM-L6-v2", url);
-        Assert.EndsWith("/onnx/model.onnx", url);
+        try
+        {
+            Environment.SetEnvironmentVariable("USERPROFILE", tempDir);
+            Environment.SetEnvironmentVariable("HOME", tempDir);
+            Directory.SetCurrentDirectory(tempDir);
+
+            var (url, sourceName) = ModelSourceResolver.Resolve(manifest, file, options: null);
+
+            Assert.Equal("huggingface", sourceName);
+            Assert.Contains("huggingface.co", url);
+            Assert.Contains("sentence-transformers/all-MiniLM-L6-v2", url);
+            Assert.EndsWith("/onnx/model.onnx", url);
+        }
+        finally
+        {
+            Directory.SetCurrentDirectory(prevDir);
+            Environment.SetEnvironmentVariable("USERPROFILE", prevHome);
+            Environment.SetEnvironmentVariable("HOME", prevHomeUnix);
+            try { Directory.Delete(tempDir, recursive: true); } catch { }
+        }
     }
 
     [Fact]

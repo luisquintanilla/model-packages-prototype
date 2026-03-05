@@ -9,6 +9,10 @@ internal static class ModelDownloader
     private const int MaxRetries = 3;
     private const int BufferSize = 81920; // 80KB chunks
 
+    /// <summary>Override in tests to eliminate retry delays.</summary>
+    internal static Func<int, TimeSpan> RetryDelayFactory { get; set; } =
+        attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt));
+
     private static HttpClient CreateClient()
     {
         var handler = new HttpClientHandler { AllowAutoRedirect = true };
@@ -51,7 +55,7 @@ internal static class ModelDownloader
             }
             catch (HttpRequestException ex) when (attempt < MaxRetries && IsTransient(ex))
             {
-                var delay = TimeSpan.FromSeconds(Math.Pow(2, attempt));
+                var delay = RetryDelayFactory(attempt);
                 log($"Download attempt {attempt} failed ({ex.Message}). Retrying in {delay.TotalSeconds}s...");
                 await Task.Delay(delay, ct);
                 // Partial file is preserved for resume on next attempt

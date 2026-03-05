@@ -2,6 +2,7 @@ using Xunit;
 
 namespace ModelPackages.Tests;
 
+[Collection("EnvVarTests")]
 public class CacheTests : IDisposable
 {
     private readonly string _tempDir;
