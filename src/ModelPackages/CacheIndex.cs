@@ -7,8 +7,9 @@ namespace ModelPackages;
 public sealed class CacheIndex
 {
     private const string IndexFileName = "cache-index.json";
+    private const string LockFileName = "cache-index.lock";
 
-    [JsonPropertyName("maxSizeBytes")]
+    [JsonIgnore]
     public long? MaxSizeBytes { get; set; }
 
     [JsonPropertyName("entries")]
@@ -36,6 +37,7 @@ public sealed class CacheIndex
 
         try
         {
+            using var _ = AcquireIndexLock(cacheDir);
             var json = File.ReadAllText(indexPath);
             return JsonSerializer.Deserialize(json, CacheIndexJsonContext.Default.CacheIndex)
                 ?? new CacheIndex();
@@ -51,9 +53,48 @@ public sealed class CacheIndex
     {
         Directory.CreateDirectory(cacheDir);
         var indexPath = System.IO.Path.Combine(cacheDir, IndexFileName);
-        var json = JsonSerializer.Serialize(this, CacheIndexJsonContext.Default.CacheIndex);
-        File.WriteAllText(indexPath, json);
+        var tempPath = indexPath + ".tmp." + Guid.NewGuid().ToString("N")[..8];
+
+        try
+        {
+            using var _ = AcquireIndexLock(cacheDir);
+            var json = JsonSerializer.Serialize(this, CacheIndexJsonContext.Default.CacheIndex);
+            File.WriteAllText(tempPath, json);
+            File.Move(tempPath, indexPath, overwrite: true);
+        }
+        catch
+        {
+            try { File.Delete(tempPath); } catch { }
+            throw;
+        }
     }
+
+    /// <summary>Acquires a lock file for cache-index.json access.</summary>
+    private static IDisposable AcquireIndexLock(string cacheDir)
+    {
+        Directory.CreateDirectory(cacheDir);
+        var lockPath = System.IO.Path.Combine(cacheDir, LockFileName);
+        const int maxAttempts = 50;
+        const int delayMs = 100;
+
+        for (int i = 0; i < maxAttempts; i++)
+        {
+            try
+            {
+                var fs = new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+                return fs;
+            }
+            catch (IOException) when (i < maxAttempts - 1)
+            {
+                Thread.Sleep(delayMs);
+            }
+        }
+
+        // Last resort: proceed without lock
+        return new NoOpDisposable();
+    }
+
+    private sealed class NoOpDisposable : IDisposable { public void Dispose() { } }
 
     /// <summary>Records or updates a file entry in the index.</summary>
     public void Touch(string relativePath, long sizeBytes)
