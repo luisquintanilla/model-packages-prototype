@@ -247,4 +247,68 @@ public class DownloaderTests : IAsyncLifetime
 
         Assert.Contains("Too many redirects", ex.Message);
     }
+
+    [Fact]
+    public async Task Download_ResumeFromPartialFile()
+    {
+        var content = new byte[2048];
+        Random.Shared.NextBytes(content);
+        _server.AddRangeFile("models/resume.bin", content);
+
+        var dest = TempFile("resume.bin");
+        // Write the first half as a "partial" file
+        await File.WriteAllBytesAsync(dest, content[..1024]);
+
+        await ModelDownloader.DownloadAsync(
+            $"{_server.BaseUrl}/models/resume.bin",
+            dest,
+            options: null,
+            CancellationToken.None);
+
+        Assert.Equal(content, await File.ReadAllBytesAsync(dest));
+        // Verify Range header was sent
+        var rangeReq = _server.Requests.Last();
+        Assert.Contains("bytes=1024-", rangeReq.RangeHeader);
+    }
+
+    [Fact]
+    public async Task Download_416_RestartsFreshAndSucceeds()
+    {
+        var content = new byte[] { 1, 2, 3, 4, 5 };
+        _server.AddRangeFile("models/stale.bin", content);
+
+        var dest = TempFile("stale.bin");
+        // Write a "stale" partial that's larger than the actual file (triggers 416)
+        await File.WriteAllBytesAsync(dest, new byte[9999]);
+
+        await ModelDownloader.DownloadAsync(
+            $"{_server.BaseUrl}/models/stale.bin",
+            dest,
+            options: null,
+            CancellationToken.None);
+
+        Assert.Equal(content, await File.ReadAllBytesAsync(dest));
+    }
+
+    [Fact]
+    public async Task FindPartialFile_And_CleanPartialFiles()
+    {
+        var content = new byte[2048];
+        Random.Shared.NextBytes(content);
+        _server.AddRangeFile("models/crossrun.bin", content);
+
+        // Simulate a partial file from a previous run
+        var finalPath = TempFile("crossrun.bin");
+        var partialPath = finalPath + ".partial.abcdef1234567890abcdef1234567890";
+        await File.WriteAllBytesAsync(partialPath, content[..512]);
+
+        // FindPartialFile should find the existing partial
+        var found = ModelCache.FindPartialFile(finalPath);
+        Assert.NotNull(found);
+        Assert.Equal(partialPath, found);
+
+        // CleanPartialFiles should remove it
+        ModelCache.CleanPartialFiles(finalPath);
+        Assert.Null(ModelCache.FindPartialFile(finalPath));
+    }
 }
