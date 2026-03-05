@@ -69,6 +69,8 @@ internal static class ModelDownloader
         var progress = options?.Progress;
         var fileName = Path.GetFileName(destinationPath);
 
+        try
+        {
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
 
         // HuggingFace auth: bearer token from options or HF_TOKEN env
@@ -171,6 +173,13 @@ internal static class ModelDownloader
 
         // Don't report Completed here — let ModelPackage report it after verification succeeds
         log($"Download complete: {totalRead / 1024 / 1024} MB");
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception) when (progress != null)
+        {
+            progress.Report(new DownloadProgress(0, null, fileName, DownloadPhase.Failed));
+            throw;
+        }
     }
 
     private static bool IsTransient(HttpRequestException ex)

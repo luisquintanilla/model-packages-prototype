@@ -279,7 +279,8 @@ public sealed class ModelPackage
                     catch (UnauthorizedAccessException) { }
                 }
                 log($"File already cached and verified at: {cachePath}");
-                progress?.Report(new DownloadProgress(file.Size ?? 0, file.Size, fileName, DownloadPhase.Completed));
+                var cachedSize = file.Size ?? new FileInfo(cachePath).Length;
+                progress?.Report(new DownloadProgress(cachedSize, file.Size ?? cachedSize, fileName, DownloadPhase.Completed));
                 UpdateCacheIndex(cachePath, file, options, log);
                 return cachePath;
             }
@@ -289,6 +290,8 @@ public sealed class ModelPackage
         progress?.Report(new DownloadProgress(0, file.Size, fileName, DownloadPhase.Resolving));
         var (url, sourceName) = ModelSourceResolver.Resolve(_manifest, file, options, log);
 
+        try
+        {
         // Acquire lock and download
         using (await ModelCache.AcquireLockAsync(cachePath, cancellationToken))
         {
@@ -312,7 +315,8 @@ public sealed class ModelPackage
                         catch (UnauthorizedAccessException) { }
                     }
                     log($"File appeared in cache while waiting for lock: {cachePath}");
-                    progress?.Report(new DownloadProgress(file.Size ?? 0, file.Size, fileName, DownloadPhase.Completed));
+                    var lockedCachedSize = file.Size ?? new FileInfo(cachePath).Length;
+                    progress?.Report(new DownloadProgress(lockedCachedSize, file.Size ?? lockedCachedSize, fileName, DownloadPhase.Completed));
                     return cachePath;
                 }
             }
@@ -338,6 +342,13 @@ public sealed class ModelPackage
         log($"File cached at: {cachePath}");
         UpdateCacheIndex(cachePath, file, options, log);
         return cachePath;
+        }
+        catch (OperationCanceledException) { throw; }
+        catch
+        {
+            progress?.Report(new DownloadProgress(0, file.Size, fileName, DownloadPhase.Failed));
+            throw;
+        }
     }
 
     /// <summary>Updates the cache index with access time and triggers eviction if needed.</summary>
