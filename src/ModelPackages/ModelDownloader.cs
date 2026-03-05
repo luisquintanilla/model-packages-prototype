@@ -15,7 +15,7 @@ internal static class ModelDownloader
 
     private static HttpClient CreateClient()
     {
-        var handler = new HttpClientHandler { AllowAutoRedirect = true };
+        var handler = new HttpClientHandler { AllowAutoRedirect = false };
         var client = new HttpClient(handler);
         client.DefaultRequestHeaders.UserAgent.ParseAdd("ModelPackages/1.0");
         return client;
@@ -30,7 +30,8 @@ internal static class ModelDownloader
         string url,
         string destinationPath,
         ModelOptions? options,
-        CancellationToken ct)
+        CancellationToken ct,
+        HashSet<string>? allowedHosts = null)
     {
         var log = options?.Logger ?? (_ => { });
 
@@ -50,7 +51,7 @@ internal static class ModelDownloader
         {
             try
             {
-                await DownloadCoreAsync(url, destinationPath, options, log, ct);
+                await DownloadCoreAsync(url, destinationPath, options, log, ct, allowedHosts);
                 return; // Success
             }
             catch (HttpRequestException ex) when (attempt < MaxRetries && IsTransient(ex))
@@ -68,7 +69,8 @@ internal static class ModelDownloader
         string destinationPath,
         ModelOptions? options,
         Action<string> log,
-        CancellationToken ct)
+        CancellationToken ct,
+        HashSet<string>? allowedHosts)
     {
         var progress = options?.Progress;
         var fileName = Path.GetFileName(destinationPath);
@@ -99,8 +101,58 @@ internal static class ModelDownloader
 
             log($"Downloading from {RedactUrl(url)}...");
 
-            using var response = await SharedClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+            var response = await SharedClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
 
+            // Manual redirect handling with host validation
+            const int maxRedirects = 10;
+            int redirectCount = 0;
+            var currentUri = new Uri(url);
+            while (IsRedirectStatus(response.StatusCode) && redirectCount < maxRedirects)
+            {
+                var location = response.Headers.Location;
+                if (location == null) break;
+
+                var redirectUri = location.IsAbsoluteUri ? location : new Uri(currentUri, location);
+
+                // Validate redirect target against allowed-host policy
+                if (allowedHosts != null && allowedHosts.Count > 0 &&
+                    !redirectUri.Scheme.Equals("file", StringComparison.OrdinalIgnoreCase) &&
+                    !allowedHosts.Contains(redirectUri.Host))
+                {
+                    response.Dispose();
+                    throw new InvalidOperationException(
+                        $"Redirect to disallowed host '{redirectUri.Host}' blocked. " +
+                        $"Allowed hosts: {string.Join(", ", allowedHosts)}. " +
+                        $"Add '{redirectUri.Host}' to allowedHosts in model-sources.json if this redirect is expected.");
+                }
+
+                response.Dispose();
+                using var redirectRequest = new HttpRequestMessage(HttpMethod.Get, redirectUri);
+                // Preserve auth header only for same-host redirects
+                if (request.Headers.Authorization != null &&
+                    Uri.TryCreate(url, UriKind.Absolute, out var originalUri) &&
+                    string.Equals(redirectUri.Host, originalUri.Host, StringComparison.OrdinalIgnoreCase))
+                {
+                    redirectRequest.Headers.Authorization = request.Headers.Authorization;
+                }
+                // Preserve Range header for resume support
+                if (request.Headers.Range != null)
+                    redirectRequest.Headers.Range = request.Headers.Range;
+
+                log($"Following redirect to {RedactUrl(redirectUri.AbsoluteUri)}...");
+                response = await SharedClient.SendAsync(redirectRequest, HttpCompletionOption.ResponseHeadersRead, ct);
+                currentUri = redirectUri;
+                redirectCount++;
+            }
+
+            if (IsRedirectStatus(response.StatusCode))
+            {
+                response.Dispose();
+                throw new InvalidOperationException($"Too many redirects ({maxRedirects}) following {RedactUrl(url)}.");
+            }
+
+            using (response)
+            {
             if (!response.IsSuccessStatusCode)
             {
                 var statusCode = (int)response.StatusCode;
@@ -175,6 +227,7 @@ internal static class ModelDownloader
 
             // Don't report Completed here — let ModelPackage report it after verification succeeds
             log($"Download complete: {totalRead / 1024 / 1024} MB");
+            } // using (response)
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception) when (progress != null)
@@ -182,6 +235,12 @@ internal static class ModelDownloader
             progress.Report(new DownloadProgress(0, null, fileName, DownloadPhase.Failed));
             throw;
         }
+    }
+
+    private static bool IsRedirectStatus(System.Net.HttpStatusCode status)
+    {
+        var code = (int)status;
+        return code is 301 or 302 or 303 or 307 or 308;
     }
 
     private static bool IsTransient(HttpRequestException ex)

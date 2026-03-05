@@ -17,6 +17,7 @@ internal sealed class MockModelServer : IAsyncDisposable
 {
     private readonly WebApplication _app;
     private readonly Dictionary<string, FileEntry> _files = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, RedirectEntry> _redirects = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<RequestRecord> _requests = [];
 
     public string BaseUrl { get; }
@@ -32,6 +33,13 @@ internal sealed class MockModelServer : IAsyncDisposable
         {
             var path = ctx.Request.Path.Value?.TrimStart('/') ?? "";
             _requests.Add(new RequestRecord(path, ctx.Request.Headers.Authorization.ToString()));
+
+            if (_redirects.TryGetValue(path, out var redirect))
+            {
+                ctx.Response.StatusCode = redirect.StatusCode;
+                ctx.Response.Headers.Location = redirect.Location;
+                return Results.StatusCode(redirect.StatusCode);
+            }
 
             if (!_files.TryGetValue(path, out var entry))
                 return Results.NotFound($"File not found: {path}");
@@ -63,6 +71,12 @@ internal sealed class MockModelServer : IAsyncDisposable
         _files[path] = new FileEntry(content) { FailCount = failCount, FailStatusCode = failStatusCode };
     }
 
+    /// <summary>Register a redirect from one path to a target URL.</summary>
+    public void AddRedirect(string path, string location, int statusCode = 302)
+    {
+        _redirects[path] = new RedirectEntry(location, statusCode);
+    }
+
     public async ValueTask DisposeAsync()
     {
         await _app.DisposeAsync();
@@ -74,6 +88,8 @@ internal sealed class MockModelServer : IAsyncDisposable
         public int FailCount { get; set; }
         public int FailStatusCode { get; set; } = 500;
     }
+
+    private sealed record RedirectEntry(string Location, int StatusCode);
 
     internal sealed record RequestRecord(string Path, string AuthorizationHeader);
 }
