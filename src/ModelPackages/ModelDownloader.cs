@@ -73,108 +73,115 @@ internal static class ModelDownloader
         var progress = options?.Progress;
         var fileName = Path.GetFileName(destinationPath);
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, url);
-
-        // HuggingFace auth: bearer token from options or HF_TOKEN env
-        var token = options?.HuggingFaceToken
-            ?? Environment.GetEnvironmentVariable("HF_TOKEN");
-        if (!string.IsNullOrEmpty(token))
+        try
         {
-            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-        }
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
 
-        // Resume support: if partial file exists, request remaining bytes
-        long existingBytes = 0;
-        if (File.Exists(destinationPath))
-        {
-            existingBytes = new FileInfo(destinationPath).Length;
-            if (existingBytes > 0)
+            // HuggingFace auth: bearer token from options or HF_TOKEN env
+            var token = options?.HuggingFaceToken
+                ?? Environment.GetEnvironmentVariable("HF_TOKEN");
+            if (!string.IsNullOrEmpty(token))
             {
-                request.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(existingBytes, null);
-                log($"Resuming download from byte {existingBytes}...");
-            }
-        }
-
-        log($"Downloading from {RedactUrl(url)}...");
-
-        using var response = await SharedClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            var statusCode = (int)response.StatusCode;
-            var message = statusCode switch
-            {
-                401 or 403 => $"HTTP {statusCode}: Authentication failed. Set HF_TOKEN for private HF repos or override MODELPACKAGES_SOURCE.",
-                404 => $"HTTP {statusCode}: Model file not found at {RedactUrl(url)}. Check the manifest source configuration.",
-                416 => $"HTTP {statusCode}: Range not satisfiable for {RedactUrl(url)}. Partial file may be corrupt.",
-                _ => $"HTTP {statusCode}: Download failed from {RedactUrl(url)}."
-            };
-
-            // If Range request fails (416), delete partial and the caller's retry will start fresh
-            if (statusCode == 416 && File.Exists(destinationPath))
-            {
-                File.Delete(destinationPath);
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
             }
 
-            progress?.Report(new DownloadProgress(0, null, fileName, DownloadPhase.Failed));
-            throw new HttpRequestException(message, null, response.StatusCode);
-        }
-
-        // Determine if we're resuming or starting fresh
-        bool resuming = existingBytes > 0 && response.StatusCode == System.Net.HttpStatusCode.PartialContent;
-        if (existingBytes > 0 && !resuming)
-        {
-            // Server doesn't support Range — restart from scratch
-            log("Server does not support Range requests. Restarting download from scratch.");
-            existingBytes = 0;
-        }
-
-        var totalBytes = response.Content.Headers.ContentLength;
-        var totalExpected = resuming ? existingBytes + totalBytes : totalBytes;
-        log($"Content-Length: {(totalBytes.HasValue ? $"{totalBytes.Value / 1024 / 1024} MB" : "unknown")}" +
-            (resuming ? $" (resuming from {existingBytes / 1024 / 1024} MB)" : ""));
-
-        using var contentStream = await response.Content.ReadAsStreamAsync(ct);
-        // Append if resuming, create new otherwise
-        using var fileStream = new FileStream(
-            destinationPath,
-            resuming ? FileMode.Append : FileMode.Create,
-            FileAccess.Write, FileShare.None, BufferSize, useAsync: true);
-
-        var buffer = new byte[BufferSize];
-        long totalRead = existingBytes;
-        int bytesRead;
-        var lastReport = DateTimeOffset.UtcNow;
-        var lastLogReport = DateTimeOffset.UtcNow;
-        var minReportInterval = TimeSpan.FromMilliseconds(100);
-
-        progress?.Report(new DownloadProgress(0, totalBytes, fileName, DownloadPhase.Downloading));
-
-        while ((bytesRead = await contentStream.ReadAsync(buffer, ct)) > 0)
-        {
-            await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead), ct);
-            totalRead += bytesRead;
-
-            var now = DateTimeOffset.UtcNow;
-            if (now - lastReport > minReportInterval)
+            // Resume support: if partial file exists, request remaining bytes
+            long existingBytes = 0;
+            if (File.Exists(destinationPath))
             {
-                progress?.Report(new DownloadProgress(totalRead, totalBytes, fileName, DownloadPhase.Downloading));
-                lastReport = now;
+                existingBytes = new FileInfo(destinationPath).Length;
+                if (existingBytes > 0)
+                {
+                    request.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(existingBytes, null);
+                    log($"Resuming download from byte {existingBytes}...");
+                }
             }
 
-            // Log text progress every 5 seconds (separate timestamp from IProgress throttling)
-            if (now - lastLogReport > TimeSpan.FromSeconds(5))
-            {
-                if (totalExpected.HasValue)
-                    log($"Progress: {totalRead / 1024 / 1024} MB / {totalExpected.Value / 1024 / 1024} MB ({100.0 * totalRead / totalExpected.Value:F1}%)");
-                else
-                    log($"Progress: {totalRead / 1024 / 1024} MB downloaded");
-                lastLogReport = now;
-            }
-        }
+            log($"Downloading from {RedactUrl(url)}...");
 
-        // Don't report Completed here — let ModelPackage report it after verification succeeds
-        log($"Download complete: {totalRead / 1024 / 1024} MB");
+            using var response = await SharedClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var statusCode = (int)response.StatusCode;
+                var message = statusCode switch
+                {
+                    401 or 403 => $"HTTP {statusCode}: Authentication failed. Set HF_TOKEN for private HF repos or override MODELPACKAGES_SOURCE.",
+                    404 => $"HTTP {statusCode}: Model file not found at {RedactUrl(url)}. Check the manifest source configuration.",
+                    416 => $"HTTP {statusCode}: Range not satisfiable for {RedactUrl(url)}. Partial file may be corrupt.",
+                    _ => $"HTTP {statusCode}: Download failed from {RedactUrl(url)}."
+                };
+
+                // If Range request fails (416), delete partial and the caller's retry will start fresh
+                if (statusCode == 416 && File.Exists(destinationPath))
+                {
+                    File.Delete(destinationPath);
+                }
+                throw new HttpRequestException(message, null, response.StatusCode);
+            }
+
+            // Determine if we're resuming or starting fresh
+            bool resuming = existingBytes > 0 && response.StatusCode == System.Net.HttpStatusCode.PartialContent;
+            if (existingBytes > 0 && !resuming)
+            {
+                // Server doesn't support Range — restart from scratch
+                log("Server does not support Range requests. Restarting download from scratch.");
+                existingBytes = 0;
+            }
+
+            var totalBytes = response.Content.Headers.ContentLength;
+            var totalExpected = resuming ? existingBytes + totalBytes : totalBytes;
+            log($"Content-Length: {(totalBytes.HasValue ? $"{totalBytes.Value / 1024 / 1024} MB" : "unknown")}" +
+                (resuming ? $" (resuming from {existingBytes / 1024 / 1024} MB)" : ""));
+
+            using var contentStream = await response.Content.ReadAsStreamAsync(ct);
+            // Append if resuming, create new otherwise
+            using var fileStream = new FileStream(
+                destinationPath,
+                resuming ? FileMode.Append : FileMode.Create,
+                FileAccess.Write, FileShare.None, BufferSize, useAsync: true);
+
+            var buffer = new byte[BufferSize];
+            long totalRead = existingBytes;
+            int bytesRead;
+            var lastReport = DateTimeOffset.UtcNow;
+            var lastLogReport = DateTimeOffset.UtcNow;
+            var minReportInterval = TimeSpan.FromMilliseconds(100);
+
+            progress?.Report(new DownloadProgress(0, totalBytes, fileName, DownloadPhase.Downloading));
+
+            while ((bytesRead = await contentStream.ReadAsync(buffer, ct)) > 0)
+            {
+                await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead), ct);
+                totalRead += bytesRead;
+
+                var now = DateTimeOffset.UtcNow;
+                if (now - lastReport > minReportInterval)
+                {
+                    progress?.Report(new DownloadProgress(totalRead, totalBytes, fileName, DownloadPhase.Downloading));
+                    lastReport = now;
+                }
+
+                // Log text progress every 5 seconds (separate timestamp from IProgress throttling)
+                if (now - lastLogReport > TimeSpan.FromSeconds(5))
+                {
+                    if (totalExpected.HasValue)
+                        log($"Progress: {totalRead / 1024 / 1024} MB / {totalExpected.Value / 1024 / 1024} MB ({100.0 * totalRead / totalExpected.Value:F1}%)");
+                    else
+                        log($"Progress: {totalRead / 1024 / 1024} MB downloaded");
+                    lastLogReport = now;
+                }
+            }
+
+            // Don't report Completed here — let ModelPackage report it after verification succeeds
+            log($"Download complete: {totalRead / 1024 / 1024} MB");
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception) when (progress != null)
+        {
+            progress.Report(new DownloadProgress(0, null, fileName, DownloadPhase.Failed));
+            throw;
+        }
     }
 
     private static bool IsTransient(HttpRequestException ex)
