@@ -19,4 +19,12 @@ internal static class Diagnostics
         category: "ModelPackages",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor InvalidClassName = new(
+        id: "MPKG003",
+        title: "Invalid ModelPackageClassName",
+        messageFormat: "The ModelPackageClassName '{0}' is not a valid C# identifier. It must be a valid identifier and not a language keyword.",
+        category: "ModelPackages",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
 }
