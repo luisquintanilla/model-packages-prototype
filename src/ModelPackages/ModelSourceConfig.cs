@@ -125,20 +125,34 @@ internal static class ModelSourceConfig
         var userFile = Path.Combine(userDir, FileName);
         if (File.Exists(userFile))
         {
-            var json = File.ReadAllText(userFile);
-            var file = JsonSerializer.Deserialize(json, JsonContext.Default.ModelSourcesFile);
-            if (file?.Cache?.MaxSizeBytes.HasValue == true)
-                maxSize = file.Cache.MaxSizeBytes;
+            try
+            {
+                var json = File.ReadAllText(userFile);
+                var file = JsonSerializer.Deserialize(json, JsonContext.Default.ModelSourcesFile);
+                if (file?.Cache?.MaxSizeBytes.HasValue == true)
+                    maxSize = file.Cache.MaxSizeBytes;
+            }
+            catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+            {
+                // Malformed or inaccessible config — treat as no max configured
+            }
         }
 
         var dir = projectDir ?? Directory.GetCurrentDirectory();
         var projectFile = Path.Combine(dir, FileName);
         if (File.Exists(projectFile))
         {
-            var json = File.ReadAllText(projectFile);
-            var file = JsonSerializer.Deserialize(json, JsonContext.Default.ModelSourcesFile);
-            if (file?.Cache?.MaxSizeBytes.HasValue == true)
-                maxSize = file.Cache.MaxSizeBytes;
+            try
+            {
+                var json = File.ReadAllText(projectFile);
+                var file = JsonSerializer.Deserialize(json, JsonContext.Default.ModelSourcesFile);
+                if (file?.Cache?.MaxSizeBytes.HasValue == true)
+                    maxSize = file.Cache.MaxSizeBytes;
+            }
+            catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+            {
+                // Malformed or inaccessible config — treat as no max configured
+            }
         }
 
         return maxSize;
