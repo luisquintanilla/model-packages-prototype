@@ -288,65 +288,66 @@ public sealed class ModelPackage
 
         // Resolve source URL
         progress?.Report(new DownloadProgress(0, file.Size, fileName, DownloadPhase.Resolving));
-        var (url, sourceName) = ModelSourceResolver.Resolve(_manifest, file, options, log);
-
         try
         {
-        // Acquire lock and download
-        using (await ModelCache.AcquireLockAsync(cachePath, cancellationToken))
-        {
-            // Double-check after acquiring lock (another process may have downloaded)
-            if (!options?.ForceRedownload == true)
+            var (url, sourceName) = ModelSourceResolver.Resolve(_manifest, file, options, log);
+            // Acquire lock and download
+            using (await ModelCache.AcquireLockAsync(cachePath, cancellationToken))
             {
-                if (!forceVerification &&
-                    IntegrityVerifier.QuickValidate(cachePath, file.Sha256, file.Size))
+                // Double-check after acquiring lock (another process may have downloaded)
+                if (!options?.ForceRedownload == true)
                 {
-                    log($"File appeared in cache while waiting for lock: {cachePath}");
-                    UpdateCacheIndex(cachePath, file, options, log);
-                    return cachePath;
-                }
-
-                if (await IntegrityVerifier.IsValidAsync(cachePath, file.Sha256, file.Size, cancellationToken))
-                {
-                    if (!string.IsNullOrEmpty(file.Sha256))
+                    if (!forceVerification &&
+                        IntegrityVerifier.QuickValidate(cachePath, file.Sha256, file.Size))
                     {
-                        try { IntegrityVerifier.WriteSidecar(cachePath, file.Sha256); }
-                        catch (IOException) { }
-                        catch (UnauthorizedAccessException) { }
+                        log($"File appeared in cache while waiting for lock: {cachePath}");
+                        UpdateCacheIndex(cachePath, file, options, log);
+                        return cachePath;
                     }
-                    log($"File appeared in cache while waiting for lock: {cachePath}");
-                    var lockedCachedSize = file.Size ?? new FileInfo(cachePath).Length;
-                    progress?.Report(new DownloadProgress(lockedCachedSize, file.Size ?? lockedCachedSize, fileName, DownloadPhase.Completed));
-                    return cachePath;
+
+                    if (await IntegrityVerifier.IsValidAsync(cachePath, file.Sha256, file.Size, cancellationToken))
+                    {
+                        if (!string.IsNullOrEmpty(file.Sha256))
+                        {
+                            try { IntegrityVerifier.WriteSidecar(cachePath, file.Sha256); }
+                            catch (IOException) { }
+                            catch (UnauthorizedAccessException) { }
+                        }
+                        log($"File appeared in cache while waiting for lock: {cachePath}");
+                        var lockedCachedSize = file.Size ?? new FileInfo(cachePath).Length;
+                        progress?.Report(new DownloadProgress(lockedCachedSize, file.Size ?? lockedCachedSize, fileName, DownloadPhase.Completed));
+                        return cachePath;
+                    }
+                }
+
+                // Atomic download: write to temp, verify, rename
+                await ModelCache.AtomicWriteAsync(cachePath, async tempPath =>
+                {
+                    await ModelDownloader.DownloadAsync(url, tempPath, options, cancellationToken);
+                    progress?.Report(new DownloadProgress(0, file.Size, fileName, DownloadPhase.Verifying));
+                    await IntegrityVerifier.VerifyAsync(tempPath, file.Sha256, file.Size, cancellationToken, log);
+                }, cancellationToken);
+
+                // Write sidecar after successful download and verification (best-effort)
+                if (!string.IsNullOrEmpty(file.Sha256))
+                {
+                    try { IntegrityVerifier.WriteSidecar(cachePath, file.Sha256); }
+                    catch (IOException) { }
+                    catch (UnauthorizedAccessException) { }
                 }
             }
 
-            // Atomic download: write to temp, verify, rename
-            await ModelCache.AtomicWriteAsync(cachePath, async tempPath =>
-            {
-                await ModelDownloader.DownloadAsync(url, tempPath, options, cancellationToken);
-                progress?.Report(new DownloadProgress(0, file.Size, fileName, DownloadPhase.Verifying));
-                await IntegrityVerifier.VerifyAsync(tempPath, file.Sha256, file.Size, cancellationToken, log);
-            }, cancellationToken);
-
-            // Write sidecar after successful download and verification (best-effort)
-            if (!string.IsNullOrEmpty(file.Sha256))
-            {
-                try { IntegrityVerifier.WriteSidecar(cachePath, file.Sha256); }
-                catch (IOException) { }
-                catch (UnauthorizedAccessException) { }
-            }
-        }
-
-        progress?.Report(new DownloadProgress(file.Size ?? 0, file.Size, fileName, DownloadPhase.Completed));
-        log($"File cached at: {cachePath}");
-        UpdateCacheIndex(cachePath, file, options, log);
-        return cachePath;
+            var downloadedSize = file.Size ?? new FileInfo(cachePath).Length;
+            progress?.Report(new DownloadProgress(downloadedSize, file.Size ?? downloadedSize, fileName, DownloadPhase.Completed));
+            log($"File cached at: {cachePath}");
+            UpdateCacheIndex(cachePath, file, options, log);
+            return cachePath;
         }
         catch (OperationCanceledException) { throw; }
-        catch
+        catch (HttpRequestException) { throw; } // Download failures already reported Failed in DownloadCoreAsync
+        catch when (progress != null)
         {
-            progress?.Report(new DownloadProgress(0, file.Size, fileName, DownloadPhase.Failed));
+            progress.Report(new DownloadProgress(0, file.Size, fileName, DownloadPhase.Failed));
             throw;
         }
     }
