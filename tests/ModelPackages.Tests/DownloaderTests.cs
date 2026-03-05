@@ -8,17 +8,21 @@ public class DownloaderTests : IAsyncLifetime
 {
     private MockModelServer _server = null!;
     private string _tempDir = null!;
+    private Func<int, TimeSpan>? _prevRetryDelay;
 
     public async Task InitializeAsync()
     {
         _server = new MockModelServer();
         _tempDir = Path.Combine(Path.GetTempPath(), "dl-test-" + Guid.NewGuid().ToString("N")[..8]);
         Directory.CreateDirectory(_tempDir);
+        _prevRetryDelay = ModelDownloader.RetryDelayFactory;
+        ModelDownloader.RetryDelayFactory = _ => TimeSpan.Zero;
         await Task.CompletedTask;
     }
 
     public async Task DisposeAsync()
     {
+        ModelDownloader.RetryDelayFactory = _prevRetryDelay!;
         await _server.DisposeAsync();
         try { Directory.Delete(_tempDir, recursive: true); } catch { }
     }
