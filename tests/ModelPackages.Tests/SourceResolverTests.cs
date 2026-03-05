@@ -17,6 +17,7 @@ public class SourceResolverTests
         // Isolate from machine-level config files that could interfere
         var prevHome = Environment.GetEnvironmentVariable("USERPROFILE");
         var prevHomeUnix = Environment.GetEnvironmentVariable("HOME");
+        var prevSource = Environment.GetEnvironmentVariable("MODELPACKAGES_SOURCE");
         var prevDir = Directory.GetCurrentDirectory();
         var tempDir = Path.Combine(Path.GetTempPath(), "resolver-test-" + Guid.NewGuid().ToString("N")[..8]);
         Directory.CreateDirectory(tempDir);
@@ -25,6 +26,7 @@ public class SourceResolverTests
         {
             Environment.SetEnvironmentVariable("USERPROFILE", tempDir);
             Environment.SetEnvironmentVariable("HOME", tempDir);
+            Environment.SetEnvironmentVariable("MODELPACKAGES_SOURCE", null);
             Directory.SetCurrentDirectory(tempDir);
 
             var (url, sourceName) = ModelSourceResolver.Resolve(manifest, file, options: null);
@@ -39,6 +41,7 @@ public class SourceResolverTests
             Directory.SetCurrentDirectory(prevDir);
             Environment.SetEnvironmentVariable("USERPROFILE", prevHome);
             Environment.SetEnvironmentVariable("HOME", prevHomeUnix);
+            Environment.SetEnvironmentVariable("MODELPACKAGES_SOURCE", prevSource);
             try { Directory.Delete(tempDir, recursive: true); } catch { }
         }
     }

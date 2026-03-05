@@ -6,7 +6,7 @@ namespace ModelPackages.Tests;
 /// Serializes test classes that mutate process-level environment variables.
 /// xUnit runs tests in parallel by default; env var mutations are not parallel-safe.
 /// </summary>
-[CollectionDefinition("EnvVarTests")]
+[CollectionDefinition("EnvVarTests", DisableParallelization = true)]
 public class EnvVarTestCollection : ICollectionFixture<EnvVarTestCollection.Marker>
 {
     public class Marker { }
