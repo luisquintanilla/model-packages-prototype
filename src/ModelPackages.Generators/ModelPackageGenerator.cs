@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 
 namespace ModelPackages.Generators;
@@ -37,6 +38,17 @@ public sealed class ModelPackageGenerator : IIncrementalGenerator
         context.RegisterSourceOutput(combined, (spc, pair) =>
         {
             var ((manifestText, className), rootNamespace) = pair;
+
+            // Validate class name is a legal C# identifier
+            var trimmedName = className.Trim();
+            if (trimmedName != DefaultClassName && !SyntaxFacts.IsValidIdentifier(trimmedName))
+            {
+                spc.ReportDiagnostic(Diagnostic.Create(
+                    Diagnostics.InvalidClassName, Location.None, className));
+                return;
+            }
+            className = trimmedName;
+
             var content = manifestText.GetText(spc.CancellationToken)?.ToString();
             if (string.IsNullOrWhiteSpace(content))
             {
