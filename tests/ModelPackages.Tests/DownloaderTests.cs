@@ -147,4 +147,104 @@ public class DownloaderTests : IAsyncLifetime
 
         Assert.Equal(content, await File.ReadAllBytesAsync(dest));
     }
+
+    [Fact]
+    public async Task Download_Redirect_FollowsAndDownloads()
+    {
+        var content = new byte[] { 1, 2, 3 };
+        _server.AddFile("models/target.bin", content);
+        _server.AddRedirect("models/redirect.bin", $"{_server.BaseUrl}/models/target.bin");
+
+        var dest = TempFile();
+        await ModelDownloader.DownloadAsync(
+            $"{_server.BaseUrl}/models/redirect.bin",
+            dest,
+            options: null,
+            CancellationToken.None);
+
+        Assert.Equal(content, await File.ReadAllBytesAsync(dest));
+    }
+
+    [Fact]
+    public async Task Download_Redirect_AllowedHostPermitted()
+    {
+        var content = new byte[] { 4, 5, 6 };
+        _server.AddFile("models/target.bin", content);
+        _server.AddRedirect("models/redir.bin", $"{_server.BaseUrl}/models/target.bin");
+
+        var uri = new Uri(_server.BaseUrl);
+        var allowedHosts = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { uri.Host };
+
+        var dest = TempFile();
+        await ModelDownloader.DownloadAsync(
+            $"{_server.BaseUrl}/models/redir.bin",
+            dest,
+            options: null,
+            CancellationToken.None,
+            allowedHosts);
+
+        Assert.Equal(content, await File.ReadAllBytesAsync(dest));
+    }
+
+    [Fact]
+    public async Task Download_Redirect_DisallowedHostBlocked()
+    {
+        _server.AddRedirect("models/evil.bin", "http://evil.example.com/malware.bin");
+
+        // Only allow a host that doesn't match the redirect target
+        var allowedHosts = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "trusted.example.com" };
+
+        var dest = TempFile();
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            ModelDownloader.DownloadAsync(
+                $"{_server.BaseUrl}/models/evil.bin",
+                dest,
+                options: null,
+                CancellationToken.None,
+                allowedHosts));
+
+        Assert.Contains("evil.example.com", ex.Message);
+        Assert.Contains("disallowed", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Download_Redirect_SameHostPreservesAuth()
+    {
+        var content = new byte[] { 7, 8 };
+        _server.AddFile("models/final.bin", content);
+        // Redirect to same server (same host) — auth should be preserved
+        _server.AddRedirect("models/samehost.bin", $"{_server.BaseUrl}/models/final.bin");
+
+        var dest = TempFile();
+        var options = new ModelOptions { HuggingFaceToken = "hf_secret_token" };
+        await ModelDownloader.DownloadAsync(
+            $"{_server.BaseUrl}/models/samehost.bin",
+            dest,
+            options,
+            CancellationToken.None);
+
+        // The redirect target request should still have the auth header (same host)
+        var finalReq = _server.Requests.Last();
+        Assert.Equal("models/final.bin", finalReq.Path);
+        Assert.Contains("Bearer hf_secret_token", finalReq.AuthorizationHeader);
+    }
+
+    [Fact]
+    public async Task Download_Redirect_ExceedsMaxDepth_Throws()
+    {
+        // Create a chain of 11 redirects (exceeds max of 10)
+        for (int i = 0; i < 11; i++)
+            _server.AddRedirect($"models/r{i}.bin", $"{_server.BaseUrl}/models/r{i + 1}.bin");
+        _server.AddFile("models/r11.bin", new byte[] { 1 });
+
+        var dest = TempFile();
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            ModelDownloader.DownloadAsync(
+                $"{_server.BaseUrl}/models/r0.bin",
+                dest,
+                options: null,
+                CancellationToken.None));
+
+        Assert.Contains("Too many redirects", ex.Message);
+    }
 }

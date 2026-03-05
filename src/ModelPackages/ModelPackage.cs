@@ -291,6 +291,7 @@ public sealed class ModelPackage
         try
         {
             var (url, sourceName) = ModelSourceResolver.Resolve(_manifest, file, options, log);
+            var (_, _, allowedHosts) = ModelSourceConfig.Load();
             // Acquire lock and download
             using (await ModelCache.AcquireLockAsync(cachePath, cancellationToken))
             {
@@ -323,7 +324,7 @@ public sealed class ModelPackage
                 // Atomic download: write to temp, verify, rename
                 await ModelCache.AtomicWriteAsync(cachePath, async tempPath =>
                 {
-                    await ModelDownloader.DownloadAsync(url, tempPath, options, cancellationToken);
+                    await ModelDownloader.DownloadAsync(url, tempPath, options, cancellationToken, allowedHosts);
                     progress?.Report(new DownloadProgress(0, file.Size, fileName, DownloadPhase.Verifying));
                     await IntegrityVerifier.VerifyAsync(tempPath, file.Sha256, file.Size, cancellationToken, log);
                 }, cancellationToken);
