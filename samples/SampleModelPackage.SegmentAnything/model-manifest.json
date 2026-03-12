@@ -3,8 +3,8 @@
     "id": "facebook/sam2-hiera-tiny",
     "revision": "main",
     "files": [
-      { "path": "sam2_hiera_tiny_encoder.onnx", "sha256": "PLACEHOLDER", "size": 0 },
-      { "path": "sam2_hiera_tiny_decoder.onnx", "sha256": "PLACEHOLDER", "size": 0 }
+      { "path": "sam2_hiera_tiny_encoder.onnx", "sha256": "BF8C3C0EB5943B3376261AED4C52CF335161DAAD0DCE5AF9C1A243704550CA72", "size": 109471936 },
+      { "path": "sam2_hiera_tiny_decoder.onnx", "sha256": "2008192A9FF55A2A9C46813A56015315F4230495F04E7A315DBEDBE35F39A339", "size": 16540977 }
     ]
   },
   "sources": {

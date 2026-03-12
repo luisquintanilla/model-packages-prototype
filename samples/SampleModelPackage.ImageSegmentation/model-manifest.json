@@ -3,7 +3,7 @@
     "id": "nvidia/segformer-b0-finetuned-ade-512-512",
     "revision": "main",
     "files": [
-      { "path": "onnx/model.onnx", "sha256": "PLACEHOLDER", "size": 0 }
+      { "path": "onnx/model.onnx", "sha256": "9DEED8464DCA9F1A1F36B23D4F67FF1AB7D59CCFF4DB96EA247F6AB2B3C240F9", "size": 15259764 }
     ]
   },
   "sources": {

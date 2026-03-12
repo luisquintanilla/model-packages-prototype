@@ -3,7 +3,7 @@
     "id": "ultralytics/yolov8s",
     "revision": "main",
     "files": [
-      { "path": "onnx/model.onnx", "sha256": "PLACEHOLDER", "size": 0 }
+      { "path": "onnx/model.onnx", "sha256": "45E1A32FB11A1BAA120001846872D2B091D8EF96203BA517E866361E6BCB3268", "size": 44869837 }
     ]
   },
   "sources": {

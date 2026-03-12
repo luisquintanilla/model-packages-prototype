@@ -3,10 +3,10 @@
     "id": "openai/clip-vit-base-patch32",
     "revision": "main",
     "files": [
-      { "path": "onnx/vision_model.onnx", "sha256": "PLACEHOLDER", "size": 0 },
-      { "path": "onnx/text_model.onnx", "sha256": "PLACEHOLDER", "size": 0 },
-      { "path": "vocab.json", "sha256": "PLACEHOLDER", "size": 0 },
-      { "path": "merges.txt", "sha256": "PLACEHOLDER", "size": 0 }
+      { "path": "onnx/vision_model.onnx", "sha256": "71D6E882F85E00C48829AF8F4A5BB026078828CD492A27CE957CAF78B4C0D9E8", "size": 352714841 },
+      { "path": "onnx/text_model.onnx", "sha256": "D20102C2007FC4F8704C4BFFA327C8F208AD26384F6386C34C5BFB6E71544295", "size": 255073674 },
+      { "path": "vocab.json", "sha256": "5047B556CE86CCAF6AA22B3FFCCFC52D391EA4ACCDAB9C2F2407DA5B742D4363", "size": 862328 },
+      { "path": "merges.txt", "sha256": "9FD691F7C8039210E0FCED15865466C65820D09B63988B0174BFE25DE299051A", "size": 524619 }
     ]
   },
   "sources": {

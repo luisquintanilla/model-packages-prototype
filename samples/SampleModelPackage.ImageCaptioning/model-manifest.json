@@ -3,9 +3,9 @@
     "id": "microsoft/git-base-coco",
     "revision": "main",
     "files": [
-      { "path": "encoder.onnx", "sha256": "PLACEHOLDER", "size": 0 },
-      { "path": "decoder.onnx", "sha256": "PLACEHOLDER", "size": 0 },
-      { "path": "vocab.txt", "sha256": "PLACEHOLDER", "size": 0 }
+      { "path": "encoder.onnx", "sha256": "310E3AD1FB753D4DD5EE0BC71D146706C5C71097197DED325FEBF64FDCFB1613", "size": 345863203 },
+      { "path": "decoder.onnx", "sha256": "ABD56898B1A672B3166CFA5075B77CD78157DD7703753FD830A54118EA7F798E", "size": 361026544 },
+      { "path": "vocab.txt", "sha256": "07ECED375CEC144D27C900241F3E339478DEC958F92FDDBC551F295C992038A3", "size": 231508 }
     ]
   },
   "sources": {

@@ -3,9 +3,9 @@
     "id": "microsoft/git-base-textvqa",
     "revision": "main",
     "files": [
-      { "path": "encoder.onnx", "sha256": "PLACEHOLDER", "size": 0 },
-      { "path": "decoder.onnx", "sha256": "PLACEHOLDER", "size": 0 },
-      { "path": "vocab.txt", "sha256": "PLACEHOLDER", "size": 0 }
+      { "path": "encoder.onnx", "sha256": "F421F66162F6C8BE82BA7B80AE35FC6766DD7E33C749E8464F9C91B2A8009C25", "size": 348031525 },
+      { "path": "decoder.onnx", "sha256": "17FC1B5EDCECE09154572CAA7E31B71AE2F97D01E74BCB1D1E75ECF65F99B3ED", "size": 361026544 },
+      { "path": "vocab.txt", "sha256": "07ECED375CEC144D27C900241F3E339478DEC958F92FDDBC551F295C992038A3", "size": 231508 }
     ]
   },
   "sources": {

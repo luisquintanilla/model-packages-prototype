@@ -3,7 +3,7 @@
     "id": "Intel/dpt-hybrid-midas",
     "revision": "main",
     "files": [
-      { "path": "onnx/model.onnx", "sha256": "PLACEHOLDER", "size": 0 }
+      { "path": "onnx/model.onnx", "sha256": "D13B9BFC3606352E75A910C5E0995136B2F8D8B703D15CF47805E0B49F60D010", "size": 533017863 }
     ]
   },
   "sources": {

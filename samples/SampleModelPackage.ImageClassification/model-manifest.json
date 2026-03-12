@@ -3,7 +3,7 @@
     "id": "google/vit-base-patch16-224",
     "revision": "main",
     "files": [
-      { "path": "onnx/model.onnx", "sha256": "PLACEHOLDER", "size": 0 }
+      { "path": "onnx/model.onnx", "sha256": "F172B80B2FE7A7615AF376B5DB802C9B0B74C1D7AE1378A01D9ECE3A954ADD81", "size": 346464937 }
     ]
   },
   "sources": {
