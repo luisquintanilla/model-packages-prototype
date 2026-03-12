@@ -3,7 +3,7 @@
     "id": "openai/clip-vit-base-patch32",
     "revision": "main",
     "files": [
-      { "path": "onnx/model.onnx", "sha256": "28CEC70D221D0747A047A17634FFF1D49198A6710C5291304476515264F480A8", "size": 605534740 }
+      { "path": "onnx/vision_model.onnx", "sha256": "71D6E882F85E00C48829AF8F4A5BB026078828CD492A27CE957CAF78B4C0D9E8", "size": 352714841 }
     ]
   },
   "sources": {
