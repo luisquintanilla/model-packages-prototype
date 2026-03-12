@@ -1,0 +1,17 @@
+{
+  "model": {
+    "id": "Intel/dpt-hybrid-midas",
+    "revision": "main",
+    "files": [
+      { "path": "onnx/model.onnx", "sha256": "PLACEHOLDER", "size": 0 }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface",
+      "repo": "lquint/dpt-hybrid-midas-onnx",
+      "revision": "main"
+    }
+  },
+  "defaultSource": "huggingface"
+}

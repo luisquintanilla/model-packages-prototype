@@ -1,0 +1,18 @@
+{
+  "model": {
+    "id": "facebook/sam2-hiera-tiny",
+    "revision": "main",
+    "files": [
+      { "path": "sam2_hiera_tiny_encoder.onnx", "sha256": "PLACEHOLDER", "size": 0 },
+      { "path": "sam2_hiera_tiny_decoder.onnx", "sha256": "PLACEHOLDER", "size": 0 }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface",
+      "repo": "lquint/sam2-hiera-tiny-onnx",
+      "revision": "main"
+    }
+  },
+  "defaultSource": "huggingface"
+}

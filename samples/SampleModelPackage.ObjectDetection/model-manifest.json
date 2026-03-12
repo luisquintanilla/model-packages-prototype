@@ -1,0 +1,17 @@
+{
+  "model": {
+    "id": "ultralytics/yolov8s",
+    "revision": "main",
+    "files": [
+      { "path": "onnx/model.onnx", "sha256": "PLACEHOLDER", "size": 0 }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface",
+      "repo": "lquint/yolov8s-onnx",
+      "revision": "main"
+    }
+  },
+  "defaultSource": "huggingface"
+}

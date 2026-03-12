@@ -1,0 +1,17 @@
+{
+  "model": {
+    "id": "openai/clip-vit-base-patch32",
+    "revision": "main",
+    "files": [
+      { "path": "onnx/model.onnx", "sha256": "PLACEHOLDER", "size": 0 }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface",
+      "repo": "lquint/clip-vit-base-patch32-onnx",
+      "revision": "main"
+    }
+  },
+  "defaultSource": "huggingface"
+}

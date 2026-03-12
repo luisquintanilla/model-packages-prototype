@@ -1,0 +1,21 @@
+{
+  "model": {
+    "id": "CompVis/stable-diffusion-v1-4",
+    "revision": "main",
+    "files": [
+      { "path": "text_encoder/model.onnx", "sha256": "PLACEHOLDER", "size": 0 },
+      { "path": "unet/model.onnx", "sha256": "PLACEHOLDER", "size": 0 },
+      { "path": "vae_decoder/model.onnx", "sha256": "PLACEHOLDER", "size": 0 },
+      { "path": "tokenizer/vocab.json", "sha256": "PLACEHOLDER", "size": 0 },
+      { "path": "tokenizer/merges.txt", "sha256": "PLACEHOLDER", "size": 0 }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface",
+      "repo": "lquint/stable-diffusion-v1-4-onnx",
+      "revision": "main"
+    }
+  },
+  "defaultSource": "huggingface"
+}

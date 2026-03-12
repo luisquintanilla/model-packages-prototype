@@ -73,4 +73,44 @@
     <Project Path="samples/SampleModelPackage.SpeechT5Tts/SampleModelPackage.SpeechT5Tts.csproj" />
     <Project Path="samples/SampleConsumer.SpeechT5Tts/SampleConsumer.SpeechT5Tts.csproj" />
   </Folder>
+  <Folder Name="/samples/image-classification/">
+    <Project Path="samples/SampleModelPackage.ImageClassification/SampleModelPackage.ImageClassification.csproj" />
+    <Project Path="samples/SampleConsumer.ImageClassification/SampleConsumer.ImageClassification.csproj" />
+  </Folder>
+  <Folder Name="/samples/object-detection/">
+    <Project Path="samples/SampleModelPackage.ObjectDetection/SampleModelPackage.ObjectDetection.csproj" />
+    <Project Path="samples/SampleConsumer.ObjectDetection/SampleConsumer.ObjectDetection.csproj" />
+  </Folder>
+  <Folder Name="/samples/image-segmentation/">
+    <Project Path="samples/SampleModelPackage.ImageSegmentation/SampleModelPackage.ImageSegmentation.csproj" />
+    <Project Path="samples/SampleConsumer.ImageSegmentation/SampleConsumer.ImageSegmentation.csproj" />
+  </Folder>
+  <Folder Name="/samples/depth-estimation/">
+    <Project Path="samples/SampleModelPackage.DepthEstimation/SampleModelPackage.DepthEstimation.csproj" />
+    <Project Path="samples/SampleConsumer.DepthEstimation/SampleConsumer.DepthEstimation.csproj" />
+  </Folder>
+  <Folder Name="/samples/image-embedding/">
+    <Project Path="samples/SampleModelPackage.ImageEmbedding/SampleModelPackage.ImageEmbedding.csproj" />
+    <Project Path="samples/SampleConsumer.ImageEmbedding/SampleConsumer.ImageEmbedding.csproj" />
+  </Folder>
+  <Folder Name="/samples/zero-shot-classification/">
+    <Project Path="samples/SampleModelPackage.ZeroShotClassification/SampleModelPackage.ZeroShotClassification.csproj" />
+    <Project Path="samples/SampleConsumer.ZeroShotClassification/SampleConsumer.ZeroShotClassification.csproj" />
+  </Folder>
+  <Folder Name="/samples/image-captioning/">
+    <Project Path="samples/SampleModelPackage.ImageCaptioning/SampleModelPackage.ImageCaptioning.csproj" />
+    <Project Path="samples/SampleConsumer.ImageCaptioning/SampleConsumer.ImageCaptioning.csproj" />
+  </Folder>
+  <Folder Name="/samples/visual-qa/">
+    <Project Path="samples/SampleModelPackage.VisualQA/SampleModelPackage.VisualQA.csproj" />
+    <Project Path="samples/SampleConsumer.VisualQA/SampleConsumer.VisualQA.csproj" />
+  </Folder>
+  <Folder Name="/samples/segment-anything/">
+    <Project Path="samples/SampleModelPackage.SegmentAnything/SampleModelPackage.SegmentAnything.csproj" />
+    <Project Path="samples/SampleConsumer.SegmentAnything/SampleConsumer.SegmentAnything.csproj" />
+  </Folder>
+  <Folder Name="/samples/text-to-image/">
+    <Project Path="samples/SampleModelPackage.TextToImage/SampleModelPackage.TextToImage.csproj" />
+    <Project Path="samples/SampleConsumer.TextToImage/SampleConsumer.TextToImage.csproj" />
+  </Folder>
 </Solution>

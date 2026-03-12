@@ -1,0 +1,17 @@
+{
+  "model": {
+    "id": "google/vit-base-patch16-224",
+    "revision": "main",
+    "files": [
+      { "path": "onnx/model.onnx", "sha256": "PLACEHOLDER", "size": 0 }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface",
+      "repo": "lquint/vit-base-patch16-224-onnx",
+      "revision": "main"
+    }
+  },
+  "defaultSource": "huggingface"
+}

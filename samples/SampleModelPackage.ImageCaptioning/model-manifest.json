@@ -1,0 +1,19 @@
+{
+  "model": {
+    "id": "microsoft/git-base-coco",
+    "revision": "main",
+    "files": [
+      { "path": "encoder.onnx", "sha256": "PLACEHOLDER", "size": 0 },
+      { "path": "decoder.onnx", "sha256": "PLACEHOLDER", "size": 0 },
+      { "path": "vocab.txt", "sha256": "PLACEHOLDER", "size": 0 }
+    ]
+  },
+  "sources": {
+    "huggingface": {
+      "type": "huggingface",
+      "repo": "lquint/git-base-coco-onnx",
+      "revision": "main"
+    }
+  },
+  "defaultSource": "huggingface"
+}

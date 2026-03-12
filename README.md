@@ -47,6 +47,18 @@ dotnet run --project samples/SampleConsumer.SileroVad
 dotnet run --project samples/SampleConsumer.AstAudioSet
 dotnet run --project samples/SampleConsumer.ClapEmbedding
 dotnet run --project samples/SampleConsumer.SpeechT5Tts
+
+# Image samples (require a test image; models downloaded on first run)
+dotnet run --project samples/SampleConsumer.ImageClassification
+dotnet run --project samples/SampleConsumer.ObjectDetection
+dotnet run --project samples/SampleConsumer.ImageSegmentation
+dotnet run --project samples/SampleConsumer.DepthEstimation
+dotnet run --project samples/SampleConsumer.ImageEmbedding
+dotnet run --project samples/SampleConsumer.ZeroShotClassification
+dotnet run --project samples/SampleConsumer.ImageCaptioning
+dotnet run --project samples/SampleConsumer.VisualQA
+dotnet run --project samples/SampleConsumer.SegmentAnything
+dotnet run --project samples/SampleConsumer.TextToImage
 ```
 
 ### Locally
@@ -85,6 +97,16 @@ The prototype includes sample model packages and consumers for every major ML/AI
 | **Speech-to-Text (Tiny)** | `SampleModelPackage.WhisperTiny` | `SampleConsumer.WhisperTiny` | Whisper Tiny |
 | **Speech-to-Text (Base)** | `SampleModelPackage.WhisperBase` | `SampleConsumer.WhisperBase` | Whisper Base |
 | **Text-to-Speech** | `SampleModelPackage.SpeechT5Tts` | `SampleConsumer.SpeechT5Tts` | SpeechT5 TTS |
+| **Image Classification** | `SampleModelPackage.ImageClassification` | `SampleConsumer.ImageClassification` | ViT-Base-Patch16-224 |
+| **Object Detection** | `SampleModelPackage.ObjectDetection` | `SampleConsumer.ObjectDetection` | YOLOv8s |
+| **Image Segmentation** | `SampleModelPackage.ImageSegmentation` | `SampleConsumer.ImageSegmentation` | SegFormer-B0 ADE-512 |
+| **Depth Estimation** | `SampleModelPackage.DepthEstimation` | `SampleConsumer.DepthEstimation` | DPT-Hybrid-Midas |
+| **Image Embedding** | `SampleModelPackage.ImageEmbedding` | `SampleConsumer.ImageEmbedding` | CLIP ViT-Base-Patch32 |
+| **Zero-Shot Classification** | `SampleModelPackage.ZeroShotClassification` | `SampleConsumer.ZeroShotClassification` | CLIP ViT-Base-Patch32 |
+| **Image Captioning** | `SampleModelPackage.ImageCaptioning` | `SampleConsumer.ImageCaptioning` | GIT-Base-COCO |
+| **Visual QA** | `SampleModelPackage.VisualQA` | `SampleConsumer.VisualQA` | GIT-Base-TextVQA |
+| **Segment Anything** | `SampleModelPackage.SegmentAnything` | `SampleConsumer.SegmentAnything` | SAM2-Hiera-Tiny |
+| **Text-to-Image** | `SampleModelPackage.TextToImage` | `SampleConsumer.TextToImage` | Stable Diffusion v1.4 |
 
 Each model package embeds a manifest and small assets (vocabs, label maps) while large model binaries are fetched on demand through the Core SDK.
 
@@ -137,7 +159,28 @@ model-packages-prototype/
 │   ├── SampleModelPackage.WhisperBase/      ← Whisper Base speech-to-text (ONNX)
 │   ├── SampleConsumer.WhisperBase/          ← Consumer: transcribe audio
 │   ├── SampleModelPackage.SpeechT5Tts/     ← SpeechT5 text-to-speech (5 ONNX files)
-│   └── SampleConsumer.SpeechT5Tts/         ← Consumer: synthesize speech
+│   ├── SampleConsumer.SpeechT5Tts/         ← Consumer: synthesize speech
+│   │  ── Image ────────────────────────────────────────────────────
+│   ├── SampleModelPackage.ImageClassification/ ← ViT image classification (ImageNet)
+│   ├── SampleConsumer.ImageClassification/     ← Consumer: classify images
+│   ├── SampleModelPackage.ObjectDetection/     ← YOLOv8s object detection
+│   ├── SampleConsumer.ObjectDetection/         ← Consumer: detect objects in images
+│   ├── SampleModelPackage.ImageSegmentation/   ← SegFormer semantic segmentation
+│   ├── SampleConsumer.ImageSegmentation/       ← Consumer: segment image pixels
+│   ├── SampleModelPackage.DepthEstimation/     ← DPT monocular depth estimation
+│   ├── SampleConsumer.DepthEstimation/         ← Consumer: estimate depth maps
+│   ├── SampleModelPackage.ImageEmbedding/      ← CLIP image embedding (MEAI)
+│   ├── SampleConsumer.ImageEmbedding/          ← Consumer: image similarity
+│   ├── SampleModelPackage.ZeroShotClassification/ ← CLIP zero-shot classification
+│   ├── SampleConsumer.ZeroShotClassification/     ← Consumer: classify with text labels
+│   ├── SampleModelPackage.ImageCaptioning/     ← GIT-Base image captioning (MEAI)
+│   ├── SampleConsumer.ImageCaptioning/         ← Consumer: generate captions
+│   ├── SampleModelPackage.VisualQA/            ← GIT-Base visual question answering
+│   ├── SampleConsumer.VisualQA/                ← Consumer: answer questions about images
+│   ├── SampleModelPackage.SegmentAnything/     ← SAM2 segment anything
+│   ├── SampleConsumer.SegmentAnything/         ← Consumer: point/box prompted segmentation
+│   ├── SampleModelPackage.TextToImage/         ← Stable Diffusion text-to-image
+│   └── SampleConsumer.TextToImage/             ← Consumer: generate images from text
 │
 ├── tools/
 │   └── PrepareMLNetModel/                   ← Helper to build .mlnet from raw ONNX + vocab
@@ -165,6 +208,9 @@ model-packages-prototype/
 │    NER, QA, reranking via ML.NET + ONNX Runtime           │
 │  MLNet.AudioInference.Onnx — audio classification,        │
 │    embedding, VAD, TTS, speech-to-text                     │
+│  MLNet.ImageInference.Onnx — image classification,        │
+│    detection, segmentation, depth, captioning, VQA         │
+│  MLNet.ImageGeneration.OnnxGenAI — text-to-image           │
 │  MLNet.TextGeneration.OnnxGenAI — local text generation   │
 │  IEmbeddingGenerator, IChatClient (MEAI abstractions)     │
 ├─────────────────────────────────────────────────────────┤
@@ -276,6 +322,9 @@ dotnet add package ModelPackages
 - **MLNet.AudioInference.Onnx** — Audio inference: classification, embedding, VAD, TTS, speech-to-text
 - **MLNet.Audio.Core** — Audio primitives: AudioData, AudioIO, MelSpectrogramExtractor
 - **MLNet.Audio.Tokenizers** — Audio tokenizers: SpeechT5 char tokenizer, Whisper tokenizer
+- **MLNet.ImageInference.Onnx** — Image inference: classification, detection, segmentation, depth, embedding, captioning, VQA, zero-shot, SAM2
+- **MLNet.ImageGeneration.OnnxGenAI** — Image generation: Stable Diffusion text-to-image
+- **MLNet.Image.Core** — Image primitives: BoundingBox, DepthMap, SegmentationMask, preprocessors
 - **System.Text.Json** — Source-generated serialization for manifests
 
 ## Status
